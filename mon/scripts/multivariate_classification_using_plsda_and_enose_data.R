@@ -149,3 +149,15 @@ tune_plsda_train_1 <- tune.splsda(
     test.keepX = list_keep_x,
     nrepeat = 10
 )
+
+# we can then extract the average error rate
+error <- tune_plsda_train_1$error.rate
+
+ncomp <- tune_plsda_train_1$choice.ncomp$ncomp
+
+ncomp
+
+# calculate the optimal number of variable for the model
+select_keep_x <- tune_plsda_train_1$choice.keepX[1:ncomp]
+
+select_keep_x
