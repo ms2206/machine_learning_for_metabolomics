@@ -1,0 +1,11 @@
+Images:
+https://www.transfernow.net/dl/20260212c32OFs5Q
+
+Videos:
+https://www.transfernow.net/dl/20260212uo4c7nyK
+
+YOLO model:
+https://www.transfernow.net/dl/20260212KSnIn2zE
+
+SAM3 model:
+https://www.transfernow.net/dl/20260212duUjrrqn
