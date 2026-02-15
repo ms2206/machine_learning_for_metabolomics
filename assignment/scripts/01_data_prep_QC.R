@@ -171,14 +171,14 @@ main <- function(script_dir) {
   #########################################
 
   cat("PCA without scaling or centering...\n")
-  ca_year_2_pca_unscaled <- pca_wrapper(ca_year_2, scale = FALSE, center = FALSE)
-  dca_year_1_pca_unscaled <- pca_wrapper(dca_year_1, scale = FALSE, center = FALSE)
-  dca_year_2_pca_unscaled <- pca_wrapper(dca_year_2, scale = FALSE, center = FALSE)
+  ca_year_2_pca_none <- pca_wrapper(ca_year_2, scale = FALSE, center = FALSE)
+  dca_year_1_pca_none <- pca_wrapper(dca_year_1, scale = FALSE, center = FALSE)
+  dca_year_2_pca_none <- pca_wrapper(dca_year_2, scale = FALSE, center = FALSE)
 
 
-  plot(ca_year_2_pca_unscaled, type = "screeplot", main = "Scree Plot for CA Year 2 PCA | Unscaled & Uncentered")
-  plot(dca_year_1_pca_unscaled, type = "screeplot", main = "Scree Plot for DCA Year 1 PCA | Unscaled & Uncentered")
-  plot(dca_year_2_pca_unscaled, type = "screeplot", main = "Scree Plot for DCA Year 2 PCA | Unscaled & Uncentered")
+  plot(ca_year_2_pca_none, type = "screeplot", main = "Scree Plot for CA Year 2 PCA | Unscaled & Uncentered")
+  plot(dca_year_1_pca_none, type = "screeplot", main = "Scree Plot for DCA Year 1 PCA | Unscaled & Uncentered")
+  plot(dca_year_2_pca_none, type = "screeplot", main = "Scree Plot for DCA Year 2 PCA | Unscaled & Uncentered")
 
 
   ## create a bioplots for the three datasets using the scaled and centered PCA results, colored by storage week and ripening
@@ -223,10 +223,85 @@ main <- function(script_dir) {
     PLOTS_DIR
   )
 
-  # use pretreat.R to perform auto-scaling
-  # using training data ()
-  cat("Performing auto-scaling on the datasets...\n")
-  pretreat()
+  # Can I merge dca_year_1 and dca_year_2 and do a PCA on the combined dataset?
+  cat("Merging DCA Year 1 and Year 2 datasets for combined PCA...\n")
+
+  # Fix column name mismatch
+  colnames(dca_year_1)[colnames(dca_year_1) == "X7OH.ABA"] <- "X7.OH.ABA"
+
+  dca_combined <- rbind(dca_year_1, dca_year_2)
+  dca_combined_samples <- c(dca_year_1_samples, dca_year_2_samples)
+  dca_combined_pca <- pca_wrapper(dca_combined, scale = TRUE, center = TRUE)
+
+  # add column to indicate year
+  dca_combined$Year <- c(rep("Year 1", nrow(dca_year_1)), rep("Year 2", nrow(dca_year_2)))
+  dca_combined$Year <- factor(dca_combined$Year)
+
+  save_plot(
+    biplot_wrapper(dca_combined_pca, dca_combined$Storage.Week, dca_combined_samples),
+    "biplot_dca_combined_storage_week.png",
+    PLOTS_DIR
+  )
+
+  save_plot(
+    biplot_wrapper(dca_combined_pca, dca_combined$Ripening.Stage, dca_combined_samples),
+    "biplot_dca_combined_ripening_stage.png",
+    PLOTS_DIR
+  )
+
+  save_plot(
+    biplot_wrapper(dca_combined_pca, dca_combined$Year, dca_combined_samples),
+    "biplot_dca_combined_year.png",
+    PLOTS_DIR
+  )
+
+  # PCA2 on the virtical axis looks to separate year, is this a batch effect?
+  # Extract PC2 scores
+  pc2_scores <- dca_combined_pca$x[, 2]
+
+  # Add metadata
+  combined_pc2_df <- data.frame(
+    PC2 = pc2_scores,
+    Storage_Week = dca_combined$Storage.Week, # Adjust column name as needed
+    Year = dca_combined$Year,
+    Ripening_Stage = dca_combined$Ripening.Stage
+  )
+
+  # Plot PC2 vs Storage Week
+
+  pc2_storage_week <- ggplot(combined_pc2_df, aes(x = Storage_Week, y = PC2, color = Year)) +
+    geom_point(size = 3) +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(
+      title = "PC2 vs Storage Week",
+      x = "Storage Week",
+      y = "PC2 Score (13.59%)"
+    ) +
+    theme_bw()
+
+  save_plot(
+    pc2_storage_week,
+    "pc2_vs_storage_week.png",
+    PLOTS_DIR
+  )
+
+
+  # Plot PC2 vs Ripening Stage
+  pc2_ripening_stage <- ggplot(combined_pc2_df, aes(x = Ripening_Stage, y = PC2, color = Year)) +
+    geom_point(size = 3) +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(
+      title = "PC2 vs Ripening Stage",
+      x = "Ripening Stage",
+      y = "PC2 Score (13.59%)"
+    ) +
+    theme_bw()
+
+  save_plot(
+    pc2_ripening_stage,
+    "pc2_vs_ripening_stage.png",
+    PLOTS_DIR
+  )
 }
 
 
