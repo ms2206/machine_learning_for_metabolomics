@@ -67,22 +67,15 @@ biplot_wrapper <- function(pca_result, group_var, sample_names) {
         ylab(paste("PC2 (", Var2, "%)", sep = ""))
 }
 
-save_plot <- function(plot_obj, filename) {
+save_plot <- function(plot_obj, filename, output_dir) {
     # Save the plot to the specified filename with a date appended to it
-    # TODO:
-    output_dir <- "/Users/mspriggs/Library/CloudStorage/OneDrive-Illumina,Inc./Documents/Applied_Bioinformatics/modules/machine_learning_for_metabolomics/assignment/outputs/plots"
-
-    # Create directory if it doesn't exist
-    if (!dir.exists(output_dir)) {
-        dir.create(output_dir, recursive = TRUE)
-    }
 
     # Append date to filename
     date_str <- format(Sys.Date(), "%Y-%m-%d")
-    filename_with_date <- paste0(tools::file_path_sans_ext(filename), "_", date_str, ".", tools::file_ext(filename))
+    filename_with_date <- paste0(date_str, "_", filename)
 
     # Save the plot
     filepath <- file.path(output_dir, filename_with_date)
-    ggplot2::ggsave(filepath, plot = plot_obj, width = 10, height = 8, dpi = 300)
+    ggplot2::ggsave(filepath, plot = plot_obj, width = 10, height = 8, dpi = 300) # nolint
     cat("Plot saved to:", filepath, "\n")
 }

@@ -6,7 +6,10 @@ library(tidyr)
 library(mixOmics)
 library(dotenv)
 
-# load utility functions
+################################################
+################### Load .env ##################
+################################################
+cat("Loading environment variables from .env file...\n")
 tryCatch(
   {
     dotenv::load_dot_env()
@@ -21,17 +24,34 @@ tryCatch(
 )
 
 
-# load .env variables
-UTILS_FILEPATH <- Sys.getenv("UTILS_FILEPATH")
-DATA_DIR <- Sys.getenv("DATA_DIR")
+################################################
+############# Set up Global Scope ##############
+################################################
+cat("Setting up global variables and sourcing utility functions...\n")
+WORKING_DIR <- Sys.getenv("WORKING_DIR")
 
-### this script is designed to be run using Rscript from the command line
-### to run in RStudio
+# define file paths
+UTILS_FILEPATH <- file.path(WORKING_DIR, "scripts", "01_data_prep_utils.R")
+PRETREAT_FILEPATH <- file.path(WORKING_DIR, "scripts", "pretreat.R")
+DATA_DIR <- file.path(WORKING_DIR, "Assignment_Data")
+OUTPUT_DIR <- file.path(WORKING_DIR, "outputs")
+PLOTS_DIR <- file.path(OUTPUT_DIR, "plots")
+
+date_str <- format(Sys.Date(), "%Y-%m-%d")
+
 
 
 # source utility functions
 source(UTILS_FILEPATH)
 print(paste("Utility functions sourced from:", UTILS_FILEPATH))
+
+source(PRETREAT_FILEPATH)
+print(paste("Pretreatment functions sourced from:", PRETREAT_FILEPATH))
+
+################################################
+################### Main #######################
+################################################
+
 
 main <- function(script_dir) {
   cat("\n")
@@ -47,11 +67,6 @@ main <- function(script_dir) {
   ca_year_2 <- load_data(file.path(DATA_DIR, "CA_Year2.csv"))
   dca_year_2 <- load_data(file.path(DATA_DIR, "DCA_Year2.csv"))
   dca_year_1 <- load_data(file.path(DATA_DIR, "DCA_Year1.csv"))
-
-  # load data
-  # ca_year_2 <- load_data("/Users/mspriggs/Library/CloudStorage/OneDrive-Illumina,Inc./Documents/Applied_Bioinformatics/modules/machine_learning_for_metabolomics/assignment/Assignment_Data/CA_Year2.csv") # nolint: line_length_linter.
-  # dca_year_2 <- load_data("/Users/mspriggs/Library/CloudStorage/OneDrive-Illumina,Inc./Documents/Applied_Bioinformatics/modules/machine_learning_for_metabolomics/assignment/Assignment_Data/DCA_Year2.csv") # nolint: line_length_linter.
-  # dca_year_1 <- load_data("/Users/mspriggs/Library/CloudStorage/OneDrive-Illumina,Inc./Documents/Applied_Bioinformatics/modules/machine_learning_for_metabolomics/assignment/Assignment_Data/DCA_Year1.csv") # nolint: line_length_linter.
 
   # check dimensions
   cat("Checking dimensions of the datasets...\n")
@@ -110,10 +125,18 @@ main <- function(script_dir) {
   dca_year_2_pca <- pca_wrapper(dca_year_2, scale = TRUE, center = TRUE)
 
   # plots for PCA
-  plot(ca_year_2_pca, type = "screeplot", main = "Scree Plot for CA Year 2 PCA | Scaled & Centered")
-  plot(dca_year_1_pca, type = "screeplot", main = "Scree Plot for DCA Year 1 PCA | Scaled & Centered")
-  plot(dca_year_2_pca, type = "screeplot", main = "Scree Plot for DCA Year 2 PCA | Scaled & Centered")
 
+  png(filename = file.path(PLOTS_DIR, paste0(date_str, "ca_year_2_pca_pca_scree_plots.png")), width = 1200, height = 800)
+  plot(ca_year_2_pca, type = "screeplot", main = "Scree Plot for CA Year 2 PCA | Scaled & Centered")
+  dev.off()
+
+  png(filename = file.path(PLOTS_DIR, paste0(date_str, "dca_year_1_pca_scree_plots.png")), width = 1200, height = 800)
+  plot(dca_year_1_pca, type = "screeplot", main = "Scree Plot for DCA Year 1 PCA | Scaled & Centered")
+  dev.off()
+
+  png(filename = file.path(PLOTS_DIR, paste0(date_str, "dca_year_2_pca_scree_plots.png")), width = 1200, height = 800)
+  plot(dca_year_2_pca, type = "screeplot", main = "Scree Plot for DCA Year 2 PCA | Scaled & Centered")
+  dev.off()
 
   #############################
   ######## Scaled only ########
@@ -162,14 +185,48 @@ main <- function(script_dir) {
 
   cat("Creating biplots for PCA results using scaled and centered data...\n")
   # biplots for CA Year 2
-  biplot_wrapper(ca_year_2_pca, ca_year_2$Storage.Week, ca_year_2_samples)
-  biplot_wrapper(ca_year_2_pca, ca_year_2$Ripening.Stage, ca_year_2_samples)
+  save_plot(
+    biplot_wrapper(ca_year_2_pca, ca_year_2$Storage.Week, ca_year_2_samples),
+    "biplot_ca_year_2_storage_week.png",
+    PLOTS_DIR
+  )
+
+  save_plot(
+    biplot_wrapper(ca_year_2_pca, ca_year_2$Ripening.Stage, ca_year_2_samples),
+    "biplot_ca_year_2_ripening_stage.png",
+    PLOTS_DIR
+  )
+
   # biplots for DCA Year 1
-  biplot_wrapper(dca_year_1_pca, dca_year_1$Storage.Week, dca_year_1_samples)
-  biplot_wrapper(dca_year_1_pca, dca_year_1$Ripening.Stage, dca_year_1_samples)
+  save_plot(
+    biplot_wrapper(dca_year_1_pca, dca_year_1$Storage.Week, dca_year_1_samples),
+    "biplot_dca_year_1_storage_week.png",
+    PLOTS_DIR
+  )
+
+  save_plot(
+    biplot_wrapper(dca_year_1_pca, dca_year_1$Ripening.Stage, dca_year_1_samples),
+    "biplot_dca_year_1_ripening_stage.png",
+    PLOTS_DIR
+  )
+
   # biplots for DCA Year 2
-  biplot_wrapper(dca_year_2_pca, dca_year_2$Storage.Week, dca_year_2_samples)
-  biplot_wrapper(dca_year_2_pca, dca_year_2$Ripening.Stage, dca_year_2_samples)
+  save_plot(
+    biplot_wrapper(dca_year_2_pca, dca_year_2$Storage.Week, dca_year_2_samples),
+    "biplot_dca_year_2_storage_week.png",
+    PLOTS_DIR
+  )
+
+  save_plot(
+    biplot_wrapper(dca_year_2_pca, dca_year_2$Ripening.Stage, dca_year_2_samples),
+    "biplot_dca_year_2_ripening_stage.png",
+    PLOTS_DIR
+  )
+
+  # use pretreat.R to perform auto-scaling
+  # using training data ()
+  cat("Performing auto-scaling on the datasets...\n")
+  pretreat()
 }
 
 
