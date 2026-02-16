@@ -31,8 +31,7 @@ cat("Setting up global variables and sourcing utility functions...\n")
 WORKING_DIR <- Sys.getenv("WORKING_DIR")
 
 # define file paths
-UTILS_FILEPATH <- file.path(WORKING_DIR, "scripts", "01_data_prep_utils.R")
-PRETREAT_FILEPATH <- file.path(WORKING_DIR, "scripts", "pretreat.R")
+UTILS_FILEPATH <- file.path(WORKING_DIR, "scripts", "00_data_prep_utils.R")
 DATA_DIR <- file.path(WORKING_DIR, "Assignment_Data")
 OUTPUT_DIR <- file.path(WORKING_DIR, "outputs")
 PLOTS_DIR <- file.path(OUTPUT_DIR, "plots")
@@ -44,9 +43,6 @@ date_str <- format(Sys.Date(), "%Y-%m-%d")
 # source utility functions
 source(UTILS_FILEPATH)
 print(paste("Utility functions sourced from:", UTILS_FILEPATH))
-
-source(PRETREAT_FILEPATH)
-print(paste("Pretreatment functions sourced from:", PRETREAT_FILEPATH))
 
 ################################################
 ################### Main #######################

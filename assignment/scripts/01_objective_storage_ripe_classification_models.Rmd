@@ -1,0 +1,97 @@
+---
+title: "01_objective_storage_ripe_classification_models"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+Use the apple physicochemical data from the DCA trial Year 1 and Year 2.
+
+
+```{r}
+# load libraries
+library(ggplot2)
+library(caret)
+library(dotenv)
+```
+
+################################################
+################### Load .env ##################
+################################################
+
+```{r}
+cat("Loading environment variables from .env file...\n")
+tryCatch(
+  {
+    dotenv::load_dot_env()
+    cat("Environment variables loaded successfully.\n")
+  },
+  error = function(e) {
+    cat("Error loading environment variables:", e$message, "\n")
+    cat("Loading from hardcoded path as fallback...\n")
+    dotenv::load_dot_env("/Users/mspriggs/Library/CloudStorage/OneDrive-Illumina,Inc./Documents/Applied_Bioinformatics/modules/machine_learning_for_metabolomics/assignment/scripts/.env") # nolint
+    cat("Loaded .env from hardcoded path\n")
+  }
+)
+```
+
+################################################
+############# Set up Global Scope ##############
+################################################
+
+```{r}
+cat("Setting up global variables and sourcing utility functions...\n")
+WORKING_DIR <- Sys.getenv("WORKING_DIR")
+
+# define file paths
+UTILS_FILEPATH <- file.path(WORKING_DIR, "scripts", "00_data_prep_utils.R")
+DATA_DIR <- file.path(WORKING_DIR, "Assignment_Data")
+OUTPUT_DIR <- file.path(WORKING_DIR, "outputs")
+PLOTS_DIR <- file.path(OUTPUT_DIR, "plots")
+
+date_str <- format(Sys.Date(), "%Y-%m-%d")
+```
+
+You will use the data from Year1 to train and optimise the classification model and the data from Year2 to validate its performance
+
+```{r}
+# source utility functions
+source(UTILS_FILEPATH)
+print(paste("Utility functions sourced from:", UTILS_FILEPATH))
+```
+
+################################################
+################### Main #######################
+################################################
+
+
+```{r}
+# load DCA Year one as train data
+training_data <- load_data(file.path(DATA_DIR, "DCA_Year1.csv"))
+
+# load DCA Year two as test data
+validation_data <- load_data(file.path(DATA_DIR, "DCA_Year2.csv"))
+```
+
+```{r}
+# Fix column name mismatch
+colnames(training_data)[colnames(training_data) == "X7OH.ABA"] <- "X7.OH.ABA"
+```
+
+```{r}
+# extract features and labels
+training_samples <- extract_sample_names(training_data)
+rownames(training_data) <- training_samples
+training_data <- training_data[, -1]
+
+validation_samples <- extract_sample_names(validation_data)
+rownames(validation_data) <- validation_samples
+validation_data <- validation_data[, -1]
+```
+
+```{r}
+# convert storage.week and ripening.stage to factors
+training_data <- mutate_df_factors(training_data)
+validation_data <- mutate_df_factors(validation_data)
+```
+
