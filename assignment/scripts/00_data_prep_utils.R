@@ -34,7 +34,7 @@ mutate_df_factors <- function(df) {
         df$Storage.Week <- factor(df$Storage.Week)
     }
     if ("Ripening.Stage" %in% colnames(df)) {
-        df$rRipening.Stage <- factor(df$Ripening.Stage)
+        df$Ripening.Stage <- factor(df$Ripening.Stage)
     }
     return(df)
 }
