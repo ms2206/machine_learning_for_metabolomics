@@ -13,6 +13,7 @@ Use the apple physicochemical data from the DCA trial Year 1 and Year 2.
 library(ggplot2)
 library(caret)
 library(dotenv)
+library(dplyr)
 ```
 
 ################################################
@@ -70,8 +71,20 @@ print(paste("Utility functions sourced from:", UTILS_FILEPATH))
 training_data <- load_data(file.path(DATA_DIR, "DCA_Year1.csv"))
 
 # load DCA Year two as test data
-validation_data <- load_data(file.path(DATA_DIR, "DCA_Year2.csv"))
+test_data <- load_data(file.path(DATA_DIR, "DCA_Year2.csv"))
 ```
+
+```{r}
+# remove missing values from DCA Year 1
+training_data <- training_data %>% drop_na()
+```
+
+```{r}
+# infer mean for na values in DCA Year 2
+test_data <- infer_mean_for_nan(test_data)
+```
+
+
 
 ```{r}
 # Fix column name mismatch
@@ -84,14 +97,195 @@ training_samples <- extract_sample_names(training_data)
 rownames(training_data) <- training_samples
 training_data <- training_data[, -1]
 
-validation_samples <- extract_sample_names(validation_data)
-rownames(validation_data) <- validation_samples
-validation_data <- validation_data[, -1]
+test_samples <- extract_sample_names(test_data)
+rownames(test_data) <- test_samples
+test_data <- test_data[, -1]
 ```
 
 ```{r}
 # convert storage.week and ripening.stage to factors
 training_data <- mutate_df_factors(training_data)
-validation_data <- mutate_df_factors(validation_data)
+test_data <- mutate_df_factors(test_data)
 ```
 
+```{r}
+# Check the proportion of each class in the dataset for training_data
+round(prop.table(table(training_data$Storage.Week)) * 100, 2)
+```
+
+```{r}
+# get number of samples in each class
+table(training_data$Storage.Week)
+```
+
+good balance. Week 0 has a slightly higher proportion, but this isn't a major concern.
+
+```{r}
+round(prop.table(table(training_data$Ripening.Stage)) * 100, 2)
+```
+
+```{r}
+# get number of samples in each class
+table(training_data$Ripening.Stage)
+```
+
+early stage is overrepresented, focus on storage week classification first
+
+################################################
+################ Data Preparation ##############
+################################################
+
+First model: classify storage week using Storage.Week as the label and all other features as predictors
+```{r}
+# remove ripening stage, use only storage week for classification
+training_features <- training_data %>%
+  dplyr::select(-Ripening.Stage)
+```
+
+
+
+###############################################################
+################ Model Training (Storage Week) ################
+###############################################################
+
+```{r}
+# rename Storage.Week levels to valid R variable names
+training_features$Storage.Week <- factor(
+  training_features$Storage.Week,
+  levels = levels(training_features$Storage.Week),
+  labels = paste0("Week_", levels(training_features$Storage.Week))
+)
+```
+
+
+```{r}
+# use the time splits for cross-validation
+train_control_time <- trainControl(
+  method = "cv",
+  initialWindow = floor(0.8 * nrow(training_features)),
+  horizon = floor(0.2 * nrow(training_features)),
+  fixedWindow = FALSE,
+  classProbs = TRUE,
+  summaryFunction = multiClassSummary,
+  savePredictions = "final"
+)
+
+set.seed(123) # for reproducibility
+# Define parameter grid
+tune_grid <- expand.grid(mtry = c(5, 10, 15, 20, 25))
+
+# Train with grid search
+rf_model <- train(
+  Storage.Week ~ .,
+  data = training_features,
+  method = "rf",
+  trControl = train_control_time,
+  tuneGrid = tune_grid,
+  ntree = 500
+)
+```
+
+################################################
+########## Test Model with DCA Year 2 ##########
+################################################
+
+```{r}
+# Prepare test data
+test_features <- test_data %>%
+  dplyr::select(-Ripening.Stage)
+```
+
+
+```{r}
+# rename Storage.Week levels to match training data
+test_features$Storage.Week <- factor(
+  test_features$Storage.Week,
+  levels = levels(test_features$Storage.Week),
+  labels = paste0("Week_", levels(test_features$Storage.Week))
+)
+```
+
+```{r}
+# Predict on test data
+test_predictions <- predict(rf_model, newdata = test_features)
+test_probabilities <- predict(rf_model, newdata = test_features, type = "prob")
+```
+
+```{r}
+# Evaluate performance
+conf_matrix <- confusionMatrix(test_predictions, test_features$Storage.Week)
+print(conf_matrix)
+```
+
+#################################################################
+################ Model Training (Ripening Stage) ################
+#################################################################
+
+```{r}
+# remove storage week, use only ripening stage for classification
+training_features_ripening <- training_data %>%
+  dplyr::select(-Storage.Week)
+```
+
+```{r}
+train_control <- trainControl(
+  method = "cv",
+  initialWindow = floor(0.8 * nrow(training_features_ripening)),
+  horizon = floor(0.2 * nrow(training_features_ripening)),
+  fixedWindow = FALSE,
+  classProbs = TRUE,
+  summaryFunction = multiClassSummary,
+  savePredictions = "final"
+)
+
+# Calculate class weights
+class_counts <- table(training_features_ripening$Ripening.Stage)
+class_weights <- max(class_counts) / class_counts
+
+set.seed(123) # for reproducibility
+# Define parameter grid
+tune_grid_ripening <- expand.grid(mtry = c(5, 10, 15, 20, 25))
+
+# Train with grid search
+# rf_model_ripening <- train(
+#   Ripening.Stage ~ .,
+#   data = training_features_ripening,
+#   method = "rf",
+#   trControl = train_control,
+#   tuneGrid = tune_grid_ripening,
+#   ntree = 500,
+#   weights = class_weights
+# )
+
+# Train with class weights
+rf_model_final <- randomForest(
+  Ripening.Stage ~ .,
+  data = training_features_ripening,
+  ntree = 500,
+  mtry = 20,
+  classwt = class_weights,
+  importance = TRUE
+)
+```
+
+#################################################
+########## Test Ripening Stage Model with DCA Year 2 ##########
+#################################################
+
+```{r}
+# Prepare test data
+test_features_ripening <- test_data %>%
+  dplyr::select(-Storage.Week)
+```
+
+```{r}
+# predict on test data
+test_predictions_ripening <- predict(rf_model_ripening, newdata = test_features_ripening)
+test_probabilities_ripening <- predict(rf_model_ripening, newdata = test_features_ripening, type = "prob")
+```
+
+```{r}
+# evaluate performance
+conf_matrix_ripening <- confusionMatrix(test_predictions_ripening, test_features_ripening$Ripening.Stage)
+print(conf_matrix_ripening)
+```
