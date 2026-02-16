@@ -159,15 +159,14 @@ training_features$Storage.Week <- factor(
 
 
 ```{r}
-# use the time splits for cross-validation
-train_control_time <- trainControl(
+# use stratified k-fold cross-validation (ensures all weeks in each fold)
+train_control <- trainControl(
   method = "cv",
-  initialWindow = floor(0.8 * nrow(training_features)),
-  horizon = floor(0.2 * nrow(training_features)),
-  fixedWindow = FALSE,
+  number = 5,
   classProbs = TRUE,
   summaryFunction = multiClassSummary,
-  savePredictions = "final"
+  savePredictions = "final",
+  index = createFolds(training_features$Storage.Week, k = 5, list = TRUE, returnTrain = TRUE)
 )
 
 set.seed(123) # for reproducibility
@@ -179,9 +178,12 @@ rf_model <- train(
   Storage.Week ~ .,
   data = training_features,
   method = "rf",
-  trControl = train_control_time,
+  trControl = train_control,
   tuneGrid = tune_grid,
-  ntree = 500
+  metric = "Accuracy",
+  ntree = 1000, # Increased trees
+  importance = TRUE,
+  preProcess = c("center", "scale")
 )
 ```
 
@@ -246,19 +248,8 @@ set.seed(123) # for reproducibility
 # Define parameter grid
 tune_grid_ripening <- expand.grid(mtry = c(5, 10, 15, 20, 25))
 
-# Train with grid search
-# rf_model_ripening <- train(
-#   Ripening.Stage ~ .,
-#   data = training_features_ripening,
-#   method = "rf",
-#   trControl = train_control,
-#   tuneGrid = tune_grid_ripening,
-#   ntree = 500,
-#   weights = class_weights
-# )
-
 # Train with class weights
-rf_model_final <- randomForest(
+rf_model_ripening <- randomForest(
   Ripening.Stage ~ .,
   data = training_features_ripening,
   ntree = 500,
