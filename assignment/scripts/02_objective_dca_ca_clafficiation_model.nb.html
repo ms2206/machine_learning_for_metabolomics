@@ -11,7 +11,7 @@
 
 
 
-<title>01_objective_storage_ripe_classification_models</title>
+<title>02_objective_dca_ca_clafficiation_model.Rmd</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1746,14 +1746,15 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">01_objective_storage_ripe_classification_models</h1>
+<h1 class="title toc-ignore">02_objective_dca_ca_clafficiation_model.Rmd</h1>
 
 </div>
 
 
 <!-- rnb-text-begin -->
-<p>Use the apple physicochemical data from the DCA trial Year 1 and Year
-2.</p>
+<p>Objective: Analyze apple physicochemical data to differentiate
+between DCA and CA treatments using multivariate time-series
+classifiers.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJzYjJGa0lHeHBZbkpoY21sbGMxeHViR2xpY21GeWVTaG5aM0JzYjNReUtWeHViR2xpY21GeWVTaGpZWEpsZENsY2JteHBZbkpoY25rb1pHOTBaVzUyS1Z4dWJHbGljbUZ5ZVNoa2NHeDVjaWxjYm1CZ1lDSjkgLS0+XG5cbmBgYHJcbiMgbG9hZCBsaWJyYXJpZXNcbmxpYnJhcnkoZ2dwbG90MilcbmxpYnJhcnkoY2FyZXQpXG5saWJyYXJ5KGRvdGVudilcbmxpYnJhcnkoZHBseXIpXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
@@ -1846,400 +1847,21 @@ print(paste(&quot;Utility functions sourced from:&quot;, UTILS_FILEPATH))</code>
 <p class="heading"></p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJzYjJGa0lFUkRRU0JaWldGeUlHOXVaU0JoY3lCMGNtRnBiaUJrWVhSaFhHNTBjbUZwYm1sdVoxOWtZWFJoSUR3dElHeHZZV1JmWkdGMFlTaG1hV3hsTG5CaGRHZ29SRUZVUVY5RVNWSXNJRndpUkVOQlgxbGxZWEl4TG1OemRsd2lLU2xjYmx4dUl5QnNiMkZrSUVSRFFTQlpaV0Z5SUhSM2J5QmhjeUIwWlhOMElHUmhkR0ZjYm5SbGMzUmZaR0YwWVNBOExTQnNiMkZrWDJSaGRHRW9abWxzWlM1d1lYUm9LRVJCVkVGZlJFbFNMQ0JjSWtSRFFWOVpaV0Z5TWk1amMzWmNJaWtwWEc1Z1lHQWlmUT09IC0tPlxuXG5gYGByXG4jIGxvYWQgRENBIFllYXIgb25lIGFzIHRyYWluIGRhdGFcbnRyYWluaW5nX2RhdGEgPC0gbG9hZF9kYXRhKGZpbGUucGF0aChEQVRBX0RJUiwgXCJEQ0FfWWVhcjEuY3N2XCIpKVxuXG4jIGxvYWQgRENBIFllYXIgdHdvIGFzIHRlc3QgZGF0YVxudGVzdF9kYXRhIDwtIGxvYWRfZGF0YShmaWxlLnBhdGgoREFUQV9ESVIsIFwiRENBX1llYXIyLmNzdlwiKSlcbmBgYFxuXG48IS0tIHJuYi1zb3VyY2UtZW5kIC0tPlxuIn0= -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBsb2FkIERDQSBZZWFyIG9uZSBhcyB0cmFpbiBkYXRhXG50cmFpbmluZ19kYXRhIDwtIGxvYWRfZGF0YShmaWxlLnBhdGgoREFUQV9ESVIsIFwiRENBX1llYXIxLmNzdlwiKSlcblxuIyBsb2FkIERDQSBZZWFyIHR3byBhcyB0ZXN0IGRhdGFcbnRlc3RfZGF0YSA8LSBsb2FkX2RhdGEoZmlsZS5wYXRoKERBVEFfRElSLCBcIkRDQV9ZZWFyMi5jc3ZcIikpXG5gYGAifQ== -->
+<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJzYjJGa0lFUkRRU0JaWldGeUlHOXVaU0JoY3lCMGNtRnBiaUJrWVhSaFhHNTBjbUZwYm1sdVoxOWtZWFJoSUR3dElHeHZZV1JmWkdGMFlTaG1hV3hsTG5CaGRHZ29SRUZVUVY5RVNWSXNJRndpUkVOQlgxbGxZWEl4TG1OemRsd2lLU2xjYmx4dVlHQmdJbjA9IC0tPlxuXG5gYGByXG4jIGxvYWQgRENBIFllYXIgb25lIGFzIHRyYWluIGRhdGFcbnRyYWluaW5nX2RhdGEgPC0gbG9hZF9kYXRhKGZpbGUucGF0aChEQVRBX0RJUiwgXCJEQ0FfWWVhcjEuY3N2XCIpKVxuXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBsb2FkIERDQSBZZWFyIG9uZSBhcyB0cmFpbiBkYXRhXG50cmFpbmluZ19kYXRhIDwtIGxvYWRfZGF0YShmaWxlLnBhdGgoREFUQV9ESVIsIFwiRENBX1llYXIxLmNzdlwiKSlcblxuYGBgIn0= -->
 <pre class="r"><code># load DCA Year one as train data
 training_data &lt;- load_data(file.path(DATA_DIR, &quot;DCA_Year1.csv&quot;))
-
-# load DCA Year two as test data
-test_data &lt;- load_data(file.path(DATA_DIR, &quot;DCA_Year2.csv&quot;))</code></pre>
+</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJ5WlcxdmRtVWdiV2x6YzJsdVp5QjJZV3gxWlhNZ1puSnZiU0JFUTBFZ1dXVmhjaUF4WEc1MGNtRnBibWx1WjE5a1lYUmhJRHd0SUhSeVlXbHVhVzVuWDJSaGRHRWdKVDRsSUdSeWIzQmZibUVvS1Z4dVlHQmdJbjA9IC0tPlxuXG5gYGByXG4jIHJlbW92ZSBtaXNzaW5nIHZhbHVlcyBmcm9tIERDQSBZZWFyIDFcbnRyYWluaW5nX2RhdGEgPC0gdHJhaW5pbmdfZGF0YSAlPiUgZHJvcF9uYSgpXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyByZW1vdmUgbWlzc2luZyB2YWx1ZXMgZnJvbSBEQ0EgWWVhciAxXG50cmFpbmluZ19kYXRhIDwtIHRyYWluaW5nX2RhdGEgJT4lIGRyb3BfbmEoKVxuYGBgIn0= -->
-<pre class="r"><code># remove missing values from DCA Year 1
-training_data &lt;- training_data %&gt;% drop_na()</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJwYm1abGNpQnRaV0Z1SUdadmNpQnVZU0IyWVd4MVpYTWdhVzRnUkVOQklGbGxZWElnTWx4dWRHVnpkRjlrWVhSaElEd3RJR2x1Wm1WeVgyMWxZVzVmWm05eVgyNWhiaWgwWlhOMFgyUmhkR0VwWEc1Z1lHQWlmUT09IC0tPlxuXG5gYGByXG4jIGluZmVyIG1lYW4gZm9yIG5hIHZhbHVlcyBpbiBEQ0EgWWVhciAyXG50ZXN0X2RhdGEgPC0gaW5mZXJfbWVhbl9mb3JfbmFuKHRlc3RfZGF0YSlcbmBgYFxuXG48IS0tIHJuYi1zb3VyY2UtZW5kIC0tPlxuIn0= -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBpbmZlciBtZWFuIGZvciBuYSB2YWx1ZXMgaW4gRENBIFllYXIgMlxudGVzdF9kYXRhIDwtIGluZmVyX21lYW5fZm9yX25hbih0ZXN0X2RhdGEpXG5gYGAifQ== -->
-<pre class="r"><code># infer mean for na values in DCA Year 2
-test_data &lt;- infer_mean_for_nan(test_data)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJHYVhnZ1kyOXNkVzF1SUc1aGJXVWdiV2x6YldGMFkyaGNibU52Ykc1aGJXVnpLSFJ5WVdsdWFXNW5YMlJoZEdFcFcyTnZiRzVoYldWektIUnlZV2x1YVc1blgyUmhkR0VwSUQwOUlGd2lXRGRQU0M1QlFrRmNJbDBnUEMwZ1hDSllOeTVQU0M1QlFrRmNJbHh1WUdCZ0luMD0gLS0+XG5cbmBgYHJcbiMgRml4IGNvbHVtbiBuYW1lIG1pc21hdGNoXG5jb2xuYW1lcyh0cmFpbmluZ19kYXRhKVtjb2xuYW1lcyh0cmFpbmluZ19kYXRhKSA9PSBcIlg3T0guQUJBXCJdIDwtIFwiWDcuT0guQUJBXCJcbmBgYFxuXG48IS0tIHJuYi1zb3VyY2UtZW5kIC0tPlxuIn0= -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBGaXggY29sdW1uIG5hbWUgbWlzbWF0Y2hcbmNvbG5hbWVzKHRyYWluaW5nX2RhdGEpW2NvbG5hbWVzKHRyYWluaW5nX2RhdGEpID09IFwiWDdPSC5BQkFcIl0gPC0gXCJYNy5PSC5BQkFcIlxuYGBgIn0= -->
-<pre class="r"><code># Fix column name mismatch
-colnames(training_data)[colnames(training_data) == &quot;X7OH.ABA&quot;] &lt;- &quot;X7.OH.ABA&quot;</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJsZUhSeVlXTjBJR1psWVhSMWNtVnpJR0Z1WkNCc1lXSmxiSE5jYm5SeVlXbHVhVzVuWDNOaGJYQnNaWE1nUEMwZ1pYaDBjbUZqZEY5ellXMXdiR1ZmYm1GdFpYTW9kSEpoYVc1cGJtZGZaR0YwWVNsY2JuSnZkMjVoYldWektIUnlZV2x1YVc1blgyUmhkR0VwSUR3dElIUnlZV2x1YVc1blgzTmhiWEJzWlhOY2JuUnlZV2x1YVc1blgyUmhkR0VnUEMwZ2RISmhhVzVwYm1kZlpHRjBZVnNzSUMweFhWeHVYRzUwWlhOMFgzTmhiWEJzWlhNZ1BDMGdaWGgwY21GamRGOXpZVzF3YkdWZmJtRnRaWE1vZEdWemRGOWtZWFJoS1Z4dWNtOTNibUZ0WlhNb2RHVnpkRjlrWVhSaEtTQThMU0IwWlhOMFgzTmhiWEJzWlhOY2JuUmxjM1JmWkdGMFlTQThMU0IwWlhOMFgyUmhkR0ZiTENBdE1WMWNibUJnWUNKOSAtLT5cblxuYGBgclxuIyBleHRyYWN0IGZlYXR1cmVzIGFuZCBsYWJlbHNcbnRyYWluaW5nX3NhbXBsZXMgPC0gZXh0cmFjdF9zYW1wbGVfbmFtZXModHJhaW5pbmdfZGF0YSlcbnJvd25hbWVzKHRyYWluaW5nX2RhdGEpIDwtIHRyYWluaW5nX3NhbXBsZXNcbnRyYWluaW5nX2RhdGEgPC0gdHJhaW5pbmdfZGF0YVssIC0xXVxuXG50ZXN0X3NhbXBsZXMgPC0gZXh0cmFjdF9zYW1wbGVfbmFtZXModGVzdF9kYXRhKVxucm93bmFtZXModGVzdF9kYXRhKSA8LSB0ZXN0X3NhbXBsZXNcbnRlc3RfZGF0YSA8LSB0ZXN0X2RhdGFbLCAtMV1cbmBgYFxuXG48IS0tIHJuYi1zb3VyY2UtZW5kIC0tPlxuIn0= -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBleHRyYWN0IGZlYXR1cmVzIGFuZCBsYWJlbHNcbnRyYWluaW5nX3NhbXBsZXMgPC0gZXh0cmFjdF9zYW1wbGVfbmFtZXModHJhaW5pbmdfZGF0YSlcbnJvd25hbWVzKHRyYWluaW5nX2RhdGEpIDwtIHRyYWluaW5nX3NhbXBsZXNcbnRyYWluaW5nX2RhdGEgPC0gdHJhaW5pbmdfZGF0YVssIC0xXVxuXG50ZXN0X3NhbXBsZXMgPC0gZXh0cmFjdF9zYW1wbGVfbmFtZXModGVzdF9kYXRhKVxucm93bmFtZXModGVzdF9kYXRhKSA8LSB0ZXN0X3NhbXBsZXNcbnRlc3RfZGF0YSA8LSB0ZXN0X2RhdGFbLCAtMV1cbmBgYCJ9 -->
-<pre class="r"><code># extract features and labels
-training_samples &lt;- extract_sample_names(training_data)
-rownames(training_data) &lt;- training_samples
-training_data &lt;- training_data[, -1]
-
-test_samples &lt;- extract_sample_names(test_data)
-rownames(test_data) &lt;- test_samples
-test_data &lt;- test_data[, -1]</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJqYjI1MlpYSjBJSE4wYjNKaFoyVXVkMlZsYXlCaGJtUWdjbWx3Wlc1cGJtY3VjM1JoWjJVZ2RHOGdabUZqZEc5eWMxeHVkSEpoYVc1cGJtZGZaR0YwWVNBOExTQnRkWFJoZEdWZlpHWmZabUZqZEc5eWN5aDBjbUZwYm1sdVoxOWtZWFJoS1Z4dWRHVnpkRjlrWVhSaElEd3RJRzExZEdGMFpWOWtabDltWVdOMGIzSnpLSFJsYzNSZlpHRjBZU2xjYmx4dUl5QnpaWFFnYjNKa1pYSWdiMllnWm1GamRHOXlJR3hsZG1Wc2MxeHVjbWx3Wlc1bGMzTmZjM1JoWjJWelgyOXlaR1Z5SUR3dElHTW9YQ0pGWVhKc2VWd2lMQ0JjSWsxcFpGd2lMQ0JjSWt4aGRHVmNJaWxjYmx4dWRISmhhVzVwYm1kZlpHRjBZU1JTYVhCbGJtbHVaeTVUZEdGblpTQThMU0JtWVdOMGIzSW9kSEpoYVc1cGJtZGZaR0YwWVNSU2FYQmxibWx1Wnk1VGRHRm5aU3dnYkdWMlpXeHpJRDBnY21sd1pXNWxjM05mYzNSaFoyVnpYMjl5WkdWeUtWeHVkR1Z6ZEY5a1lYUmhKRkpwY0dWdWFXNW5MbE4wWVdkbElEd3RJR1poWTNSdmNpaDBaWE4wWDJSaGRHRWtVbWx3Wlc1cGJtY3VVM1JoWjJVc0lHeGxkbVZzY3lBOUlISnBjR1Z1WlhOelgzTjBZV2RsYzE5dmNtUmxjaWxjYm1CZ1lDSjkgLS0+XG5cbmBgYHJcbiMgY29udmVydCBzdG9yYWdlLndlZWsgYW5kIHJpcGVuaW5nLnN0YWdlIHRvIGZhY3RvcnNcbnRyYWluaW5nX2RhdGEgPC0gbXV0YXRlX2RmX2ZhY3RvcnModHJhaW5pbmdfZGF0YSlcbnRlc3RfZGF0YSA8LSBtdXRhdGVfZGZfZmFjdG9ycyh0ZXN0X2RhdGEpXG5cbiMgc2V0IG9yZGVyIG9mIGZhY3RvciBsZXZlbHNcbnJpcGVuZXNzX3N0YWdlc19vcmRlciA8LSBjKFwiRWFybHlcIiwgXCJNaWRcIiwgXCJMYXRlXCIpXG5cbnRyYWluaW5nX2RhdGEkUmlwZW5pbmcuU3RhZ2UgPC0gZmFjdG9yKHRyYWluaW5nX2RhdGEkUmlwZW5pbmcuU3RhZ2UsIGxldmVscyA9IHJpcGVuZXNzX3N0YWdlc19vcmRlcilcbnRlc3RfZGF0YSRSaXBlbmluZy5TdGFnZSA8LSBmYWN0b3IodGVzdF9kYXRhJFJpcGVuaW5nLlN0YWdlLCBsZXZlbHMgPSByaXBlbmVzc19zdGFnZXNfb3JkZXIpXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBjb252ZXJ0IHN0b3JhZ2Uud2VlayBhbmQgcmlwZW5pbmcuc3RhZ2UgdG8gZmFjdG9yc1xudHJhaW5pbmdfZGF0YSA8LSBtdXRhdGVfZGZfZmFjdG9ycyh0cmFpbmluZ19kYXRhKVxudGVzdF9kYXRhIDwtIG11dGF0ZV9kZl9mYWN0b3JzKHRlc3RfZGF0YSlcblxuIyBzZXQgb3JkZXIgb2YgZmFjdG9yIGxldmVsc1xucmlwZW5lc3Nfc3RhZ2VzX29yZGVyIDwtIGMoXCJFYXJseVwiLCBcIk1pZFwiLCBcIkxhdGVcIilcblxudHJhaW5pbmdfZGF0YSRSaXBlbmluZy5TdGFnZSA8LSBmYWN0b3IodHJhaW5pbmdfZGF0YSRSaXBlbmluZy5TdGFnZSwgbGV2ZWxzID0gcmlwZW5lc3Nfc3RhZ2VzX29yZGVyKVxudGVzdF9kYXRhJFJpcGVuaW5nLlN0YWdlIDwtIGZhY3Rvcih0ZXN0X2RhdGEkUmlwZW5pbmcuU3RhZ2UsIGxldmVscyA9IHJpcGVuZXNzX3N0YWdlc19vcmRlcilcbmBgYCJ9 -->
-<pre class="r"><code># convert storage.week and ripening.stage to factors
-training_data &lt;- mutate_df_factors(training_data)
-test_data &lt;- mutate_df_factors(test_data)
-
-# set order of factor levels
-ripeness_stages_order &lt;- c(&quot;Early&quot;, &quot;Mid&quot;, &quot;Late&quot;)
-
-training_data$Ripening.Stage &lt;- factor(training_data$Ripening.Stage, levels = ripeness_stages_order)
-test_data$Ripening.Stage &lt;- factor(test_data$Ripening.Stage, levels = ripeness_stages_order)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJEYUdWamF5QjBhR1VnY0hKdmNHOXlkR2x2YmlCdlppQmxZV05vSUdOc1lYTnpJR2x1SUhSb1pTQmtZWFJoYzJWMElHWnZjaUIwY21GcGJtbHVaMTlrWVhSaFhHNXliM1Z1WkNod2NtOXdMblJoWW14bEtIUmhZbXhsS0hSeVlXbHVhVzVuWDJSaGRHRWtVM1J2Y21GblpTNVhaV1ZyS1NrZ0tpQXhNREFzSURJcFhHNWdZR0FpZlE9PSAtLT5cblxuYGBgclxuIyBDaGVjayB0aGUgcHJvcG9ydGlvbiBvZiBlYWNoIGNsYXNzIGluIHRoZSBkYXRhc2V0IGZvciB0cmFpbmluZ19kYXRhXG5yb3VuZChwcm9wLnRhYmxlKHRhYmxlKHRyYWluaW5nX2RhdGEkU3RvcmFnZS5XZWVrKSkgKiAxMDAsIDIpXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBDaGVjayB0aGUgcHJvcG9ydGlvbiBvZiBlYWNoIGNsYXNzIGluIHRoZSBkYXRhc2V0IGZvciB0cmFpbmluZ19kYXRhXG5yb3VuZChwcm9wLnRhYmxlKHRhYmxlKHRyYWluaW5nX2RhdGEkU3RvcmFnZS5XZWVrKSkgKiAxMDAsIDIpXG5gYGAifQ== -->
-<pre class="r"><code># Check the proportion of each class in the dataset for training_data
-round(prop.table(table(training_data$Storage.Week)) * 100, 2)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJuWlhRZ2JuVnRZbVZ5SUc5bUlITmhiWEJzWlhNZ2FXNGdaV0ZqYUNCamJHRnpjMXh1ZEdGaWJHVW9kSEpoYVc1cGJtZGZaR0YwWVNSVGRHOXlZV2RsTGxkbFpXc3BYRzVnWUdBaWZRPT0gLS0+XG5cbmBgYHJcbiMgZ2V0IG51bWJlciBvZiBzYW1wbGVzIGluIGVhY2ggY2xhc3NcbnRhYmxlKHRyYWluaW5nX2RhdGEkU3RvcmFnZS5XZWVrKVxuYGBgXG5cbjwhLS0gcm5iLXNvdXJjZS1lbmQgLS0+XG4ifQ== -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBnZXQgbnVtYmVyIG9mIHNhbXBsZXMgaW4gZWFjaCBjbGFzc1xudGFibGUodHJhaW5pbmdfZGF0YSRTdG9yYWdlLldlZWspXG5gYGAifQ== -->
-<pre class="r"><code># get number of samples in each class
-table(training_data$Storage.Week)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>good balance. Week 0 has a slightly higher proportion, but this isn’t
-a major concern.</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVjbTkxYm1Rb2NISnZjQzUwWVdKc1pTaDBZV0pzWlNoMGNtRnBibWx1WjE5a1lYUmhKRkpwY0dWdWFXNW5MbE4wWVdkbEtTa2dLaUF4TURBc0lESXBYRzVnWUdBaWZRPT0gLS0+XG5cbmBgYHJcbnJvdW5kKHByb3AudGFibGUodGFibGUodHJhaW5pbmdfZGF0YSRSaXBlbmluZy5TdGFnZSkpICogMTAwLCAyKVxuYGBgXG5cbjwhLS0gcm5iLXNvdXJjZS1lbmQgLS0+XG4ifQ== -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucm91bmQocHJvcC50YWJsZSh0YWJsZSh0cmFpbmluZ19kYXRhJFJpcGVuaW5nLlN0YWdlKSkgKiAxMDAsIDIpXG5gYGAifQ== -->
-<pre class="r"><code>round(prop.table(table(training_data$Ripening.Stage)) * 100, 2)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJuWlhRZ2JuVnRZbVZ5SUc5bUlITmhiWEJzWlhNZ2FXNGdaV0ZqYUNCamJHRnpjMXh1ZEdGaWJHVW9kSEpoYVc1cGJtZGZaR0YwWVNSU2FYQmxibWx1Wnk1VGRHRm5aU2xjYm1CZ1lDSjkgLS0+XG5cbmBgYHJcbiMgZ2V0IG51bWJlciBvZiBzYW1wbGVzIGluIGVhY2ggY2xhc3NcbnRhYmxlKHRyYWluaW5nX2RhdGEkUmlwZW5pbmcuU3RhZ2UpXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBnZXQgbnVtYmVyIG9mIHNhbXBsZXMgaW4gZWFjaCBjbGFzc1xudGFibGUodHJhaW5pbmdfZGF0YSRSaXBlbmluZy5TdGFnZSlcbmBgYCJ9 -->
-<pre class="r"><code># get number of samples in each class
-table(training_data$Ripening.Stage)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>early stage is overrepresented, focus on storage week classification
-first</p>
 </div>
-<div id="section-6" class="section level48">
-<p class="heading"></p>
-</div>
-</div>
-<div id="data-preparation" class="section level16">
-<p class="heading">Data Preparation</p>
-<div id="section-7" class="section level48">
-<p class="heading"></p>
-<p>First model: classify storage week using Storage.Week as the label
-and all other features as predictors</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJ5WlcxdmRtVWdjbWx3Wlc1cGJtY2djM1JoWjJVc0lIVnpaU0J2Ym14NUlITjBiM0poWjJVZ2QyVmxheUJtYjNJZ1kyeGhjM05wWm1sallYUnBiMjVjYm5SeVlXbHVhVzVuWDJabFlYUjFjbVZ6SUR3dElIUnlZV2x1YVc1blgyUmhkR0VnSlQ0bFhHNGdJR1J3YkhseU9qcHpaV3hsWTNRb0xWSnBjR1Z1YVc1bkxsTjBZV2RsS1Z4dVlHQmdJbjA9IC0tPlxuXG5gYGByXG4jIHJlbW92ZSByaXBlbmluZyBzdGFnZSwgdXNlIG9ubHkgc3RvcmFnZSB3ZWVrIGZvciBjbGFzc2lmaWNhdGlvblxudHJhaW5pbmdfZmVhdHVyZXMgPC0gdHJhaW5pbmdfZGF0YSAlPiVcbiAgZHBseXI6OnNlbGVjdCgtUmlwZW5pbmcuU3RhZ2UpXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyByZW1vdmUgcmlwZW5pbmcgc3RhZ2UsIHVzZSBvbmx5IHN0b3JhZ2Ugd2VlayBmb3IgY2xhc3NpZmljYXRpb25cbnRyYWluaW5nX2ZlYXR1cmVzIDwtIHRyYWluaW5nX2RhdGEgJT4lXG4gIGRwbHlyOjpzZWxlY3QoLVJpcGVuaW5nLlN0YWdlKVxuYGBgIn0= -->
-<pre class="r"><code># remove ripening stage, use only storage week for classification
-training_features &lt;- training_data %&gt;%
-  dplyr::select(-Ripening.Stage)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<div id="section-8" class="section level63">
-<p class="heading"></p>
-</div>
-</div>
-</div>
-<div id="model-training-storage-week" class="section level16">
-<p class="heading">Model Training (Storage Week)</p>
-<div id="section-9" class="section level63">
-<p class="heading"></p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJ5Wlc1aGJXVWdVM1J2Y21GblpTNVhaV1ZySUd4bGRtVnNjeUIwYnlCMllXeHBaQ0JTSUhaaGNtbGhZbXhsSUc1aGJXVnpYRzUwY21GcGJtbHVaMTltWldGMGRYSmxjeVJUZEc5eVlXZGxMbGRsWldzZ1BDMGdabUZqZEc5eUtGeHVJQ0IwY21GcGJtbHVaMTltWldGMGRYSmxjeVJUZEc5eVlXZGxMbGRsWldzc1hHNGdJR3hsZG1Wc2N5QTlJR3hsZG1Wc2N5aDBjbUZwYm1sdVoxOW1aV0YwZFhKbGN5UlRkRzl5WVdkbExsZGxaV3NwTEZ4dUlDQnNZV0psYkhNZ1BTQndZWE4wWlRBb1hDSlhaV1ZyWDF3aUxDQnNaWFpsYkhNb2RISmhhVzVwYm1kZlptVmhkSFZ5WlhNa1UzUnZjbUZuWlM1WFpXVnJLU2xjYmlsY2JtQmdZQ0o5IC0tPlxuXG5gYGByXG4jIHJlbmFtZSBTdG9yYWdlLldlZWsgbGV2ZWxzIHRvIHZhbGlkIFIgdmFyaWFibGUgbmFtZXNcbnRyYWluaW5nX2ZlYXR1cmVzJFN0b3JhZ2UuV2VlayA8LSBmYWN0b3IoXG4gIHRyYWluaW5nX2ZlYXR1cmVzJFN0b3JhZ2UuV2VlayxcbiAgbGV2ZWxzID0gbGV2ZWxzKHRyYWluaW5nX2ZlYXR1cmVzJFN0b3JhZ2UuV2VlayksXG4gIGxhYmVscyA9IHBhc3RlMChcIldlZWtfXCIsIGxldmVscyh0cmFpbmluZ19mZWF0dXJlcyRTdG9yYWdlLldlZWspKVxuKVxuYGBgXG5cbjwhLS0gcm5iLXNvdXJjZS1lbmQgLS0+XG4ifQ== -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyByZW5hbWUgU3RvcmFnZS5XZWVrIGxldmVscyB0byB2YWxpZCBSIHZhcmlhYmxlIG5hbWVzXG50cmFpbmluZ19mZWF0dXJlcyRTdG9yYWdlLldlZWsgPC0gZmFjdG9yKFxuICB0cmFpbmluZ19mZWF0dXJlcyRTdG9yYWdlLldlZWssXG4gIGxldmVscyA9IGxldmVscyh0cmFpbmluZ19mZWF0dXJlcyRTdG9yYWdlLldlZWspLFxuICBsYWJlbHMgPSBwYXN0ZTAoXCJXZWVrX1wiLCBsZXZlbHModHJhaW5pbmdfZmVhdHVyZXMkU3RvcmFnZS5XZWVrKSlcbilcbmBgYCJ9 -->
-<pre class="r"><code># rename Storage.Week levels to valid R variable names
-training_features$Storage.Week &lt;- factor(
-  training_features$Storage.Week,
-  levels = levels(training_features$Storage.Week),
-  labels = paste0(&quot;Week_&quot;, levels(training_features$Storage.Week))
-)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUIxYzJVZ2MzUnlZWFJwWm1sbFpDQnJMV1p2YkdRZ1kzSnZjM010ZG1Gc2FXUmhkR2x2YmlBb1pXNXpkWEpsY3lCaGJHd2dkMlZsYTNNZ2FXNGdaV0ZqYUNCbWIyeGtLVnh1ZEhKaGFXNWZZMjl1ZEhKdmJDQThMU0IwY21GcGJrTnZiblJ5YjJ3b1hHNGdJRzFsZEdodlpDQTlJRndpWTNaY0lpeGNiaUFnYm5WdFltVnlJRDBnTlN4Y2JpQWdZMnhoYzNOUWNtOWljeUE5SUZSU1ZVVXNYRzRnSUhOMWJXMWhjbmxHZFc1amRHbHZiaUE5SUcxMWJIUnBRMnhoYzNOVGRXMXRZWEo1TEZ4dUlDQnpZWFpsVUhKbFpHbGpkR2x2Ym5NZ1BTQmNJbVpwYm1Gc1hDSXNYRzRnSUdsdVpHVjRJRDBnWTNKbFlYUmxSbTlzWkhNb2RISmhhVzVwYm1kZlptVmhkSFZ5WlhNa1UzUnZjbUZuWlM1WFpXVnJMQ0JySUQwZ05Td2diR2x6ZENBOUlGUlNWVVVzSUhKbGRIVnlibFJ5WVdsdUlEMGdWRkpWUlNsY2JpbGNibHh1YzJWMExuTmxaV1FvTVRJektTQWpJR1p2Y2lCeVpYQnliMlIxWTJsaWFXeHBkSGxjYmlNZ1JHVm1hVzVsSUhCaGNtRnRaWFJsY2lCbmNtbGtYRzUwZFc1bFgyZHlhV1FnUEMwZ1pYaHdZVzVrTG1keWFXUW9iWFJ5ZVNBOUlHTW9OU3dnTVRBc0lERTFMQ0F5TUN3Z01qVXBLVnh1WEc0aklGUnlZV2x1SUhkcGRHZ2daM0pwWkNCelpXRnlZMmhjYm5KbVgyMXZaR1ZzSUR3dElIUnlZV2x1S0Z4dUlDQlRkRzl5WVdkbExsZGxaV3NnZmlBdUxGeHVJQ0JrWVhSaElEMGdkSEpoYVc1cGJtZGZabVZoZEhWeVpYTXNYRzRnSUcxbGRHaHZaQ0E5SUZ3aWNtWmNJaXhjYmlBZ2RISkRiMjUwY205c0lEMGdkSEpoYVc1ZlkyOXVkSEp2YkN4Y2JpQWdkSFZ1WlVkeWFXUWdQU0IwZFc1bFgyZHlhV1FzWEc0Z0lHMWxkSEpwWXlBOUlGd2lRV05qZFhKaFkzbGNJaXhjYmlBZ2JuUnlaV1VnUFNBeE1EQXdMRnh1SUNCcGJYQnZjblJoYm1ObElEMGdWRkpWUlN4Y2JpQWdjSEpsVUhKdlkyVnpjeUE5SUdNb1hDSmpaVzUwWlhKY0lpd2dYQ0p6WTJGc1pWd2lLVnh1S1Z4dVlHQmdJbjA9IC0tPlxuXG5gYGByXG4jIHVzZSBzdHJhdGlmaWVkIGstZm9sZCBjcm9zcy12YWxpZGF0aW9uIChlbnN1cmVzIGFsbCB3ZWVrcyBpbiBlYWNoIGZvbGQpXG50cmFpbl9jb250cm9sIDwtIHRyYWluQ29udHJvbChcbiAgbWV0aG9kID0gXCJjdlwiLFxuICBudW1iZXIgPSA1LFxuICBjbGFzc1Byb2JzID0gVFJVRSxcbiAgc3VtbWFyeUZ1bmN0aW9uID0gbXVsdGlDbGFzc1N1bW1hcnksXG4gIHNhdmVQcmVkaWN0aW9ucyA9IFwiZmluYWxcIixcbiAgaW5kZXggPSBjcmVhdGVGb2xkcyh0cmFpbmluZ19mZWF0dXJlcyRTdG9yYWdlLldlZWssIGsgPSA1LCBsaXN0ID0gVFJVRSwgcmV0dXJuVHJhaW4gPSBUUlVFKVxuKVxuXG5zZXQuc2VlZCgxMjMpICMgZm9yIHJlcHJvZHVjaWJpbGl0eVxuIyBEZWZpbmUgcGFyYW1ldGVyIGdyaWRcbnR1bmVfZ3JpZCA8LSBleHBhbmQuZ3JpZChtdHJ5ID0gYyg1LCAxMCwgMTUsIDIwLCAyNSkpXG5cbiMgVHJhaW4gd2l0aCBncmlkIHNlYXJjaFxucmZfbW9kZWwgPC0gdHJhaW4oXG4gIFN0b3JhZ2UuV2VlayB+IC4sXG4gIGRhdGEgPSB0cmFpbmluZ19mZWF0dXJlcyxcbiAgbWV0aG9kID0gXCJyZlwiLFxuICB0ckNvbnRyb2wgPSB0cmFpbl9jb250cm9sLFxuICB0dW5lR3JpZCA9IHR1bmVfZ3JpZCxcbiAgbWV0cmljID0gXCJBY2N1cmFjeVwiLFxuICBudHJlZSA9IDEwMDAsXG4gIGltcG9ydGFuY2UgPSBUUlVFLFxuICBwcmVQcm9jZXNzID0gYyhcImNlbnRlclwiLCBcInNjYWxlXCIpXG4pXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyB1c2Ugc3RyYXRpZmllZCBrLWZvbGQgY3Jvc3MtdmFsaWRhdGlvbiAoZW5zdXJlcyBhbGwgd2Vla3MgaW4gZWFjaCBmb2xkKVxudHJhaW5fY29udHJvbCA8LSB0cmFpbkNvbnRyb2woXG4gIG1ldGhvZCA9IFwiY3ZcIixcbiAgbnVtYmVyID0gNSxcbiAgY2xhc3NQcm9icyA9IFRSVUUsXG4gIHN1bW1hcnlGdW5jdGlvbiA9IG11bHRpQ2xhc3NTdW1tYXJ5LFxuICBzYXZlUHJlZGljdGlvbnMgPSBcImZpbmFsXCIsXG4gIGluZGV4ID0gY3JlYXRlRm9sZHModHJhaW5pbmdfZmVhdHVyZXMkU3RvcmFnZS5XZWVrLCBrID0gNSwgbGlzdCA9IFRSVUUsIHJldHVyblRyYWluID0gVFJVRSlcbilcblxuc2V0LnNlZWQoMTIzKSAjIGZvciByZXByb2R1Y2liaWxpdHlcbiMgRGVmaW5lIHBhcmFtZXRlciBncmlkXG50dW5lX2dyaWQgPC0gZXhwYW5kLmdyaWQobXRyeSA9IGMoNSwgMTAsIDE1LCAyMCwgMjUpKVxuXG4jIFRyYWluIHdpdGggZ3JpZCBzZWFyY2hcbnJmX21vZGVsIDwtIHRyYWluKFxuICBTdG9yYWdlLldlZWsgfiAuLFxuICBkYXRhID0gdHJhaW5pbmdfZmVhdHVyZXMsXG4gIG1ldGhvZCA9IFwicmZcIixcbiAgdHJDb250cm9sID0gdHJhaW5fY29udHJvbCxcbiAgdHVuZUdyaWQgPSB0dW5lX2dyaWQsXG4gIG1ldHJpYyA9IFwiQWNjdXJhY3lcIixcbiAgbnRyZWUgPSAxMDAwLFxuICBpbXBvcnRhbmNlID0gVFJVRSxcbiAgcHJlUHJvY2VzcyA9IGMoXCJjZW50ZXJcIiwgXCJzY2FsZVwiKVxuKVxuYGBgIn0= -->
-<pre class="r"><code># use stratified k-fold cross-validation (ensures all weeks in each fold)
-train_control &lt;- trainControl(
-  method = &quot;cv&quot;,
-  number = 5,
-  classProbs = TRUE,
-  summaryFunction = multiClassSummary,
-  savePredictions = &quot;final&quot;,
-  index = createFolds(training_features$Storage.Week, k = 5, list = TRUE, returnTrain = TRUE)
-)
-
-set.seed(123) # for reproducibility
-# Define parameter grid
-tune_grid &lt;- expand.grid(mtry = c(5, 10, 15, 20, 25))
-
-# Train with grid search
-rf_model &lt;- train(
-  Storage.Week ~ .,
-  data = training_features,
-  method = &quot;rf&quot;,
-  trControl = train_control,
-  tuneGrid = tune_grid,
-  metric = &quot;Accuracy&quot;,
-  ntree = 1000,
-  importance = TRUE,
-  preProcess = c(&quot;center&quot;, &quot;scale&quot;)
-)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-</div>
-<div id="section-10" class="section level48">
-<p class="heading"></p>
-</div>
-</div>
-</div>
-<div id="test-model-with-dca-year-2" class="section level10">
-<p class="heading">Test Model with DCA Year 2</p>
-<div id="section-11" class="section level48">
-<p class="heading"></p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJRY21Wd1lYSmxJSFJsYzNRZ1pHRjBZVnh1ZEdWemRGOW1aV0YwZFhKbGN5QThMU0IwWlhOMFgyUmhkR0VnSlQ0bFhHNGdJR1J3YkhseU9qcHpaV3hsWTNRb0xWSnBjR1Z1YVc1bkxsTjBZV2RsS1Z4dVlHQmdJbjA9IC0tPlxuXG5gYGByXG4jIFByZXBhcmUgdGVzdCBkYXRhXG50ZXN0X2ZlYXR1cmVzIDwtIHRlc3RfZGF0YSAlPiVcbiAgZHBseXI6OnNlbGVjdCgtUmlwZW5pbmcuU3RhZ2UpXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBQcmVwYXJlIHRlc3QgZGF0YVxudGVzdF9mZWF0dXJlcyA8LSB0ZXN0X2RhdGEgJT4lXG4gIGRwbHlyOjpzZWxlY3QoLVJpcGVuaW5nLlN0YWdlKVxuYGBgIn0= -->
-<pre class="r"><code># Prepare test data
-test_features &lt;- test_data %&gt;%
-  dplyr::select(-Ripening.Stage)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJ5Wlc1aGJXVWdVM1J2Y21GblpTNVhaV1ZySUhSdklITjBjbWx1Wnk1Y2JuUmxjM1JmWm1WaGRIVnlaWE1rVTNSdmNtRm5aUzVYWldWcklEd3RJR1poWTNSdmNpaGNiaUFnZEdWemRGOW1aV0YwZFhKbGN5UlRkRzl5WVdkbExsZGxaV3NzWEc0Z0lHeGxkbVZzY3lBOUlHeGxkbVZzY3loMFpYTjBYMlpsWVhSMWNtVnpKRk4wYjNKaFoyVXVWMlZsYXlrc1hHNGdJR3hoWW1Wc2N5QTlJSEJoYzNSbE1DaGNJbGRsWld0ZlhDSXNJR3hsZG1Wc2N5aDBaWE4wWDJabFlYUjFjbVZ6SkZOMGIzSmhaMlV1VjJWbGF5a3BYRzRwWEc1Z1lHQWlmUT09IC0tPlxuXG5gYGByXG4jIHJlbmFtZSBTdG9yYWdlLldlZWsgdG8gc3RyaW5nLlxudGVzdF9mZWF0dXJlcyRTdG9yYWdlLldlZWsgPC0gZmFjdG9yKFxuICB0ZXN0X2ZlYXR1cmVzJFN0b3JhZ2UuV2VlayxcbiAgbGV2ZWxzID0gbGV2ZWxzKHRlc3RfZmVhdHVyZXMkU3RvcmFnZS5XZWVrKSxcbiAgbGFiZWxzID0gcGFzdGUwKFwiV2Vla19cIiwgbGV2ZWxzKHRlc3RfZmVhdHVyZXMkU3RvcmFnZS5XZWVrKSlcbilcbmBgYFxuXG48IS0tIHJuYi1zb3VyY2UtZW5kIC0tPlxuIn0= -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyByZW5hbWUgU3RvcmFnZS5XZWVrIHRvIHN0cmluZy5cbnRlc3RfZmVhdHVyZXMkU3RvcmFnZS5XZWVrIDwtIGZhY3RvcihcbiAgdGVzdF9mZWF0dXJlcyRTdG9yYWdlLldlZWssXG4gIGxldmVscyA9IGxldmVscyh0ZXN0X2ZlYXR1cmVzJFN0b3JhZ2UuV2VlayksXG4gIGxhYmVscyA9IHBhc3RlMChcIldlZWtfXCIsIGxldmVscyh0ZXN0X2ZlYXR1cmVzJFN0b3JhZ2UuV2VlaykpXG4pXG5gYGAifQ== -->
-<pre class="r"><code># rename Storage.Week to string.
-test_features$Storage.Week &lt;- factor(
-  test_features$Storage.Week,
-  levels = levels(test_features$Storage.Week),
-  labels = paste0(&quot;Week_&quot;, levels(test_features$Storage.Week))
-)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJRY21Wa2FXTjBJRzl1SUhSbGMzUWdaR0YwWVZ4dWRHVnpkRjl3Y21Wa2FXTjBhVzl1Y3lBOExTQndjbVZrYVdOMEtISm1YMjF2WkdWc0xDQnVaWGRrWVhSaElEMGdkR1Z6ZEY5bVpXRjBkWEpsY3lsY2JuUmxjM1JmY0hKdlltRmlhV3hwZEdsbGN5QThMU0J3Y21Wa2FXTjBLSEptWDIxdlpHVnNMQ0J1Wlhka1lYUmhJRDBnZEdWemRGOW1aV0YwZFhKbGN5d2dkSGx3WlNBOUlGd2ljSEp2WWx3aUtWeHVZR0JnSW4wPSAtLT5cblxuYGBgclxuIyBQcmVkaWN0IG9uIHRlc3QgZGF0YVxudGVzdF9wcmVkaWN0aW9ucyA8LSBwcmVkaWN0KHJmX21vZGVsLCBuZXdkYXRhID0gdGVzdF9mZWF0dXJlcylcbnRlc3RfcHJvYmFiaWxpdGllcyA8LSBwcmVkaWN0KHJmX21vZGVsLCBuZXdkYXRhID0gdGVzdF9mZWF0dXJlcywgdHlwZSA9IFwicHJvYlwiKVxuYGBgXG5cbjwhLS0gcm5iLXNvdXJjZS1lbmQgLS0+XG4ifQ== -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBQcmVkaWN0IG9uIHRlc3QgZGF0YVxudGVzdF9wcmVkaWN0aW9ucyA8LSBwcmVkaWN0KHJmX21vZGVsLCBuZXdkYXRhID0gdGVzdF9mZWF0dXJlcylcbnRlc3RfcHJvYmFiaWxpdGllcyA8LSBwcmVkaWN0KHJmX21vZGVsLCBuZXdkYXRhID0gdGVzdF9mZWF0dXJlcywgdHlwZSA9IFwicHJvYlwiKVxuYGBgIn0= -->
-<pre class="r"><code># Predict on test data
-test_predictions &lt;- predict(rf_model, newdata = test_features)
-test_probabilities &lt;- predict(rf_model, newdata = test_features, type = &quot;prob&quot;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJGZG1Gc2RXRjBaU0J3WlhKbWIzSnRZVzVqWlZ4dVkyOXVabDl0WVhSeWFYZ2dQQzBnWTI5dVpuVnphVzl1VFdGMGNtbDRLSFJsYzNSZmNISmxaR2xqZEdsdmJuTXNJSFJsYzNSZlptVmhkSFZ5WlhNa1UzUnZjbUZuWlM1WFpXVnJLVnh1Y0hKcGJuUW9ZMjl1Wmw5dFlYUnlhWGdwWEc1Z1lHQWlmUT09IC0tPlxuXG5gYGByXG4jIEV2YWx1YXRlIHBlcmZvcm1hbmNlXG5jb25mX21hdHJpeCA8LSBjb25mdXNpb25NYXRyaXgodGVzdF9wcmVkaWN0aW9ucywgdGVzdF9mZWF0dXJlcyRTdG9yYWdlLldlZWspXG5wcmludChjb25mX21hdHJpeClcbmBgYFxuXG48IS0tIHJuYi1zb3VyY2UtZW5kIC0tPlxuIn0= -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBFdmFsdWF0ZSBwZXJmb3JtYW5jZVxuY29uZl9tYXRyaXggPC0gY29uZnVzaW9uTWF0cml4KHRlc3RfcHJlZGljdGlvbnMsIHRlc3RfZmVhdHVyZXMkU3RvcmFnZS5XZWVrKVxucHJpbnQoY29uZl9tYXRyaXgpXG5gYGAifQ== -->
-<pre class="r"><code># Evaluate performance
-conf_matrix &lt;- confusionMatrix(test_predictions, test_features$Storage.Week)
-print(conf_matrix)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVZMjl1Wmw5dFlYUnlhWGdrZEdGaWJHVWdJeUJ5WVhjZ1kyOTFiblJ6WEc1Y2JtTnRYMk52ZFc1MGN5QThMU0JqYjI1bVgyMWhkSEpwZUNSMFlXSnNaVnh1WEc1amJWOWtaaUE4TFNCaGN5NWtZWFJoTG1aeVlXMWxLR052Ym1aZmJXRjBjbWw0SkhSaFlteGxLVnh1WTI5c2JtRnRaWE1vWTIxZlpHWXBJRHd0SUdNb1hDSlNaV1psY21WdVkyVmNJaXdnWENKUWNtVmthV04wWldSY0lpd2dYQ0pEYjNWdWRGd2lLVnh1WEc1blozQnNiM1FvWTIxZlpHWXNJR0ZsY3loNElEMGdVbVZtWlhKbGJtTmxMQ0I1SUQwZ1VISmxaR2xqZEdWa0xDQm1hV3hzSUQwZ1EyOTFiblFwS1NBclhHNGdJR2RsYjIxZmRHbHNaU2dwSUN0Y2JpQWdaMlZ2YlY5MFpYaDBLR0ZsY3loc1lXSmxiQ0E5SUVOdmRXNTBLU3dnYzJsNlpTQTlJRE1wSUN0Y2JpQWdjMk5oYkdWZlptbHNiRjluY21Ga2FXVnVkQ2hzYjNjZ1BTQmNJbmRvYVhSbFhDSXNJR2hwWjJnZ1BTQmNJbk4wWldWc1lteDFaVndpS1NBclhHNGdJSFJvWlcxbFgyMXBibWx0WVd3b0tTQXJYRzRnSUd4aFluTW9kR2wwYkdVZ1BTQmNJa052Ym1aMWMybHZiaUJOWVhSeWFYZ2dVa1lnVTNSdmNtRm5aU0JYWldWcmN5QW9RMjkxYm5SektWd2lMQ0I0SUQwZ1hDSlFjbVZrYVdOMFpXUmNJaXdnZVNBOUlGd2lVbVZtWlhKbGJtTmxYQ0lwWEc1Z1lHQWlmUT09IC0tPlxuXG5gYGByXG5jb25mX21hdHJpeCR0YWJsZSAjIHJhdyBjb3VudHNcblxuY21fY291bnRzIDwtIGNvbmZfbWF0cml4JHRhYmxlXG5cbmNtX2RmIDwtIGFzLmRhdGEuZnJhbWUoY29uZl9tYXRyaXgkdGFibGUpXG5jb2xuYW1lcyhjbV9kZikgPC0gYyhcIlJlZmVyZW5jZVwiLCBcIlByZWRpY3RlZFwiLCBcIkNvdW50XCIpXG5cbmdncGxvdChjbV9kZiwgYWVzKHggPSBSZWZlcmVuY2UsIHkgPSBQcmVkaWN0ZWQsIGZpbGwgPSBDb3VudCkpICtcbiAgZ2VvbV90aWxlKCkgK1xuICBnZW9tX3RleHQoYWVzKGxhYmVsID0gQ291bnQpLCBzaXplID0gMykgK1xuICBzY2FsZV9maWxsX2dyYWRpZW50KGxvdyA9IFwid2hpdGVcIiwgaGlnaCA9IFwic3RlZWxibHVlXCIpICtcbiAgdGhlbWVfbWluaW1hbCgpICtcbiAgbGFicyh0aXRsZSA9IFwiQ29uZnVzaW9uIE1hdHJpeCBSRiBTdG9yYWdlIFdlZWtzIChDb3VudHMpXCIsIHggPSBcIlByZWRpY3RlZFwiLCB5ID0gXCJSZWZlcmVuY2VcIilcbmBgYFxuXG48IS0tIHJuYi1zb3VyY2UtZW5kIC0tPlxuIn0= -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29uZl9tYXRyaXgkdGFibGUgIyByYXcgY291bnRzXG5cbmNtX2NvdW50cyA8LSBjb25mX21hdHJpeCR0YWJsZVxuXG5jbV9kZiA8LSBhcy5kYXRhLmZyYW1lKGNvbmZfbWF0cml4JHRhYmxlKVxuY29sbmFtZXMoY21fZGYpIDwtIGMoXCJSZWZlcmVuY2VcIiwgXCJQcmVkaWN0ZWRcIiwgXCJDb3VudFwiKVxuXG5nZ3Bsb3QoY21fZGYsIGFlcyh4ID0gUmVmZXJlbmNlLCB5ID0gUHJlZGljdGVkLCBmaWxsID0gQ291bnQpKSArXG4gIGdlb21fdGlsZSgpICtcbiAgZ2VvbV90ZXh0KGFlcyhsYWJlbCA9IENvdW50KSwgc2l6ZSA9IDMpICtcbiAgc2NhbGVfZmlsbF9ncmFkaWVudChsb3cgPSBcIndoaXRlXCIsIGhpZ2ggPSBcInN0ZWVsYmx1ZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIGxhYnModGl0bGUgPSBcIkNvbmZ1c2lvbiBNYXRyaXggUkYgU3RvcmFnZSBXZWVrcyAoQ291bnRzKVwiLCB4ID0gXCJQcmVkaWN0ZWRcIiwgeSA9IFwiUmVmZXJlbmNlXCIpXG5gYGAifQ== -->
-<pre class="r"><code>conf_matrix$table # raw counts
-
-cm_counts &lt;- conf_matrix$table
-
-cm_df &lt;- as.data.frame(conf_matrix$table)
-colnames(cm_df) &lt;- c(&quot;Reference&quot;, &quot;Predicted&quot;, &quot;Count&quot;)
-
-ggplot(cm_df, aes(x = Reference, y = Predicted, fill = Count)) +
-  geom_tile() +
-  geom_text(aes(label = Count), size = 3) +
-  scale_fill_gradient(low = &quot;white&quot;, high = &quot;steelblue&quot;) +
-  theme_minimal() +
-  labs(title = &quot;Confusion Matrix RF Storage Weeks (Counts)&quot;, x = &quot;Predicted&quot;, y = &quot;Reference&quot;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<div id="section-12" class="section level65">
-<p class="heading"></p>
-</div>
-</div>
-<div id="model-training-ripening-stage" class="section level16">
-<p class="heading">Model Training (Ripening Stage)</p>
-<div id="section-13" class="section level65">
-<p class="heading"></p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJ5WlcxdmRtVWdjM1J2Y21GblpTQjNaV1ZyTENCMWMyVWdiMjVzZVNCeWFYQmxibWx1WnlCemRHRm5aU0JtYjNJZ1kyeGhjM05wWm1sallYUnBiMjVjYm5SeVlXbHVhVzVuWDJabFlYUjFjbVZ6WDNKcGNHVnVhVzVuSUR3dElIUnlZV2x1YVc1blgyUmhkR0VnSlQ0bFhHNGdJR1J3YkhseU9qcHpaV3hsWTNRb0xWTjBiM0poWjJVdVYyVmxheWxjYm1CZ1lDSjkgLS0+XG5cbmBgYHJcbiMgcmVtb3ZlIHN0b3JhZ2Ugd2VlaywgdXNlIG9ubHkgcmlwZW5pbmcgc3RhZ2UgZm9yIGNsYXNzaWZpY2F0aW9uXG50cmFpbmluZ19mZWF0dXJlc19yaXBlbmluZyA8LSB0cmFpbmluZ19kYXRhICU+JVxuICBkcGx5cjo6c2VsZWN0KC1TdG9yYWdlLldlZWspXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyByZW1vdmUgc3RvcmFnZSB3ZWVrLCB1c2Ugb25seSByaXBlbmluZyBzdGFnZSBmb3IgY2xhc3NpZmljYXRpb25cbnRyYWluaW5nX2ZlYXR1cmVzX3JpcGVuaW5nIDwtIHRyYWluaW5nX2RhdGEgJT4lXG4gIGRwbHlyOjpzZWxlY3QoLVN0b3JhZ2UuV2VlaylcbmBgYCJ9 -->
-<pre class="r"><code># remove storage week, use only ripening stage for classification
-training_features_ripening &lt;- training_data %&gt;%
-  dplyr::select(-Storage.Week)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUIwY21GcGJpQmpiMjUwY205c0lHWnZjaUJ5YVhCbGJtbHVaeUJ6ZEdGblpWeHVkSEpoYVc1ZlkyOXVkSEp2YkNBOExTQjBjbUZwYmtOdmJuUnliMndvWEc0Z0lHMWxkR2h2WkNBOUlGd2lZM1pjSWl4Y2JpQWdiblZ0WW1WeUlEMGdOU3hjYmlBZ1kyeGhjM05RY205aWN5QTlJRlJTVlVVc1hHNGdJSE4xYlcxaGNubEdkVzVqZEdsdmJpQTlJRzExYkhScFEyeGhjM05UZFcxdFlYSjVMRnh1SUNCellYWmxVSEpsWkdsamRHbHZibk1nUFNCY0ltWnBibUZzWENJc1hHNGdJR2x1WkdWNElEMGdZM0psWVhSbFJtOXNaSE1vZEhKaGFXNXBibWRmWm1WaGRIVnlaWE5mY21sd1pXNXBibWNrVW1sd1pXNXBibWN1VTNSaFoyVXNJR3NnUFNBMUxDQnNhWE4wSUQwZ1ZGSlZSU3dnY21WMGRYSnVWSEpoYVc0Z1BTQlVVbFZGS1Z4dUtWeHVYRzV6WlhRdWMyVmxaQ2d4TWpNcElDTWdabTl5SUhKbGNISnZaSFZqYVdKcGJHbDBlVnh1SXlCRVpXWnBibVVnY0dGeVlXMWxkR1Z5SUdkeWFXUmNiblIxYm1WZlozSnBaQ0E4TFNCbGVIQmhibVF1WjNKcFpDaHRkSEo1SUQwZ1l5ZzFMQ0F4TUN3Z01UVXNJREl3TENBeU5Ta3BYRzVjYmlNZ1ZISmhhVzRnZDJsMGFDQm5jbWxrSUhObFlYSmphRnh1Y21aZmJXOWtaV3hmY21sd1pXNXBibWNnUEMwZ2RISmhhVzRvWEc0Z0lGSnBjR1Z1YVc1bkxsTjBZV2RsSUg0Z0xpeGNiaUFnWkdGMFlTQTlJSFJ5WVdsdWFXNW5YMlpsWVhSMWNtVnpYM0pwY0dWdWFXNW5MRnh1SUNCdFpYUm9iMlFnUFNCY0luSm1YQ0lzWEc0Z0lIUnlRMjl1ZEhKdmJDQTlJSFJ5WVdsdVgyTnZiblJ5YjJ3c1hHNGdJSFIxYm1WSGNtbGtJRDBnZEhWdVpWOW5jbWxrTEZ4dUlDQnRaWFJ5YVdNZ1BTQmNJa0ZqWTNWeVlXTjVYQ0lzWEc0Z0lHNTBjbVZsSUQwZ01UQXdNQ3hjYmlBZ2FXMXdiM0owWVc1alpTQTlJRlJTVlVVc1hHNGdJSEJ5WlZCeWIyTmxjM01nUFNCaktGd2lZMlZ1ZEdWeVhDSXNJRndpYzJOaGJHVmNJaWxjYmlsY2JtQmdZQ0o5IC0tPlxuXG5gYGByXG4jIHRyYWluIGNvbnRyb2wgZm9yIHJpcGVuaW5nIHN0YWdlXG50cmFpbl9jb250cm9sIDwtIHRyYWluQ29udHJvbChcbiAgbWV0aG9kID0gXCJjdlwiLFxuICBudW1iZXIgPSA1LFxuICBjbGFzc1Byb2JzID0gVFJVRSxcbiAgc3VtbWFyeUZ1bmN0aW9uID0gbXVsdGlDbGFzc1N1bW1hcnksXG4gIHNhdmVQcmVkaWN0aW9ucyA9IFwiZmluYWxcIixcbiAgaW5kZXggPSBjcmVhdGVGb2xkcyh0cmFpbmluZ19mZWF0dXJlc19yaXBlbmluZyRSaXBlbmluZy5TdGFnZSwgayA9IDUsIGxpc3QgPSBUUlVFLCByZXR1cm5UcmFpbiA9IFRSVUUpXG4pXG5cbnNldC5zZWVkKDEyMykgIyBmb3IgcmVwcm9kdWNpYmlsaXR5XG4jIERlZmluZSBwYXJhbWV0ZXIgZ3JpZFxudHVuZV9ncmlkIDwtIGV4cGFuZC5ncmlkKG10cnkgPSBjKDUsIDEwLCAxNSwgMjAsIDI1KSlcblxuIyBUcmFpbiB3aXRoIGdyaWQgc2VhcmNoXG5yZl9tb2RlbF9yaXBlbmluZyA8LSB0cmFpbihcbiAgUmlwZW5pbmcuU3RhZ2UgfiAuLFxuICBkYXRhID0gdHJhaW5pbmdfZmVhdHVyZXNfcmlwZW5pbmcsXG4gIG1ldGhvZCA9IFwicmZcIixcbiAgdHJDb250cm9sID0gdHJhaW5fY29udHJvbCxcbiAgdHVuZUdyaWQgPSB0dW5lX2dyaWQsXG4gIG1ldHJpYyA9IFwiQWNjdXJhY3lcIixcbiAgbnRyZWUgPSAxMDAwLFxuICBpbXBvcnRhbmNlID0gVFJVRSxcbiAgcHJlUHJvY2VzcyA9IGMoXCJjZW50ZXJcIiwgXCJzY2FsZVwiKVxuKVxuYGBgXG5cbjwhLS0gcm5iLXNvdXJjZS1lbmQgLS0+XG4ifQ== -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyB0cmFpbiBjb250cm9sIGZvciByaXBlbmluZyBzdGFnZVxudHJhaW5fY29udHJvbCA8LSB0cmFpbkNvbnRyb2woXG4gIG1ldGhvZCA9IFwiY3ZcIixcbiAgbnVtYmVyID0gNSxcbiAgY2xhc3NQcm9icyA9IFRSVUUsXG4gIHN1bW1hcnlGdW5jdGlvbiA9IG11bHRpQ2xhc3NTdW1tYXJ5LFxuICBzYXZlUHJlZGljdGlvbnMgPSBcImZpbmFsXCIsXG4gIGluZGV4ID0gY3JlYXRlRm9sZHModHJhaW5pbmdfZmVhdHVyZXNfcmlwZW5pbmckUmlwZW5pbmcuU3RhZ2UsIGsgPSA1LCBsaXN0ID0gVFJVRSwgcmV0dXJuVHJhaW4gPSBUUlVFKVxuKVxuXG5zZXQuc2VlZCgxMjMpICMgZm9yIHJlcHJvZHVjaWJpbGl0eVxuIyBEZWZpbmUgcGFyYW1ldGVyIGdyaWRcbnR1bmVfZ3JpZCA8LSBleHBhbmQuZ3JpZChtdHJ5ID0gYyg1LCAxMCwgMTUsIDIwLCAyNSkpXG5cbiMgVHJhaW4gd2l0aCBncmlkIHNlYXJjaFxucmZfbW9kZWxfcmlwZW5pbmcgPC0gdHJhaW4oXG4gIFJpcGVuaW5nLlN0YWdlIH4gLixcbiAgZGF0YSA9IHRyYWluaW5nX2ZlYXR1cmVzX3JpcGVuaW5nLFxuICBtZXRob2QgPSBcInJmXCIsXG4gIHRyQ29udHJvbCA9IHRyYWluX2NvbnRyb2wsXG4gIHR1bmVHcmlkID0gdHVuZV9ncmlkLFxuICBtZXRyaWMgPSBcIkFjY3VyYWN5XCIsXG4gIG50cmVlID0gMTAwMCxcbiAgaW1wb3J0YW5jZSA9IFRSVUUsXG4gIHByZVByb2Nlc3MgPSBjKFwiY2VudGVyXCIsIFwic2NhbGVcIilcbilcbmBgYCJ9 -->
-<pre class="r"><code># train control for ripening stage
-train_control &lt;- trainControl(
-  method = &quot;cv&quot;,
-  number = 5,
-  classProbs = TRUE,
-  summaryFunction = multiClassSummary,
-  savePredictions = &quot;final&quot;,
-  index = createFolds(training_features_ripening$Ripening.Stage, k = 5, list = TRUE, returnTrain = TRUE)
-)
-
-set.seed(123) # for reproducibility
-# Define parameter grid
-tune_grid &lt;- expand.grid(mtry = c(5, 10, 15, 20, 25))
-
-# Train with grid search
-rf_model_ripening &lt;- train(
-  Ripening.Stage ~ .,
-  data = training_features_ripening,
-  method = &quot;rf&quot;,
-  trControl = train_control,
-  tuneGrid = tune_grid,
-  metric = &quot;Accuracy&quot;,
-  ntree = 1000,
-  importance = TRUE,
-  preProcess = c(&quot;center&quot;, &quot;scale&quot;)
-)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-</div>
-<div id="section-14" class="section level49">
-<p class="heading"></p>
-</div>
-</div>
-</div>
-<div id="test-ripening-stage-model-with-dca-year-2" class="section level10">
-<p class="heading">Test Ripening Stage Model with DCA Year 2</p>
-<div id="section-15" class="section level49">
-<p class="heading"></p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJRY21Wd1lYSmxJSFJsYzNRZ1pHRjBZVnh1ZEdWemRGOW1aV0YwZFhKbGMxOXlhWEJsYm1sdVp5QThMU0IwWlhOMFgyUmhkR0VnSlQ0bFhHNGdJR1J3YkhseU9qcHpaV3hsWTNRb0xWTjBiM0poWjJVdVYyVmxheWxjYm1CZ1lDSjkgLS0+XG5cbmBgYHJcbiMgUHJlcGFyZSB0ZXN0IGRhdGFcbnRlc3RfZmVhdHVyZXNfcmlwZW5pbmcgPC0gdGVzdF9kYXRhICU+JVxuICBkcGx5cjo6c2VsZWN0KC1TdG9yYWdlLldlZWspXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBQcmVwYXJlIHRlc3QgZGF0YVxudGVzdF9mZWF0dXJlc19yaXBlbmluZyA8LSB0ZXN0X2RhdGEgJT4lXG4gIGRwbHlyOjpzZWxlY3QoLVN0b3JhZ2UuV2VlaylcbmBgYCJ9 -->
-<pre class="r"><code># Prepare test data
-test_features_ripening &lt;- test_data %&gt;%
-  dplyr::select(-Storage.Week)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJ3Y21Wa2FXTjBJRzl1SUhSbGMzUWdaR0YwWVZ4dWRHVnpkRjl3Y21Wa2FXTjBhVzl1YzE5eWFYQmxibWx1WnlBOExTQndjbVZrYVdOMEtISm1YMjF2WkdWc1gzSnBjR1Z1YVc1bkxDQnVaWGRrWVhSaElEMGdkR1Z6ZEY5bVpXRjBkWEpsYzE5eWFYQmxibWx1WnlsY2JuUmxjM1JmY0hKdlltRmlhV3hwZEdsbGMxOXlhWEJsYm1sdVp5QThMU0J3Y21Wa2FXTjBLSEptWDIxdlpHVnNYM0pwY0dWdWFXNW5MQ0J1Wlhka1lYUmhJRDBnZEdWemRGOW1aV0YwZFhKbGMxOXlhWEJsYm1sdVp5d2dkSGx3WlNBOUlGd2ljSEp2WWx3aUtWeHVZR0JnSW4wPSAtLT5cblxuYGBgclxuIyBwcmVkaWN0IG9uIHRlc3QgZGF0YVxudGVzdF9wcmVkaWN0aW9uc19yaXBlbmluZyA8LSBwcmVkaWN0KHJmX21vZGVsX3JpcGVuaW5nLCBuZXdkYXRhID0gdGVzdF9mZWF0dXJlc19yaXBlbmluZylcbnRlc3RfcHJvYmFiaWxpdGllc19yaXBlbmluZyA8LSBwcmVkaWN0KHJmX21vZGVsX3JpcGVuaW5nLCBuZXdkYXRhID0gdGVzdF9mZWF0dXJlc19yaXBlbmluZywgdHlwZSA9IFwicHJvYlwiKVxuYGBgXG5cbjwhLS0gcm5iLXNvdXJjZS1lbmQgLS0+XG4ifQ== -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBwcmVkaWN0IG9uIHRlc3QgZGF0YVxudGVzdF9wcmVkaWN0aW9uc19yaXBlbmluZyA8LSBwcmVkaWN0KHJmX21vZGVsX3JpcGVuaW5nLCBuZXdkYXRhID0gdGVzdF9mZWF0dXJlc19yaXBlbmluZylcbnRlc3RfcHJvYmFiaWxpdGllc19yaXBlbmluZyA8LSBwcmVkaWN0KHJmX21vZGVsX3JpcGVuaW5nLCBuZXdkYXRhID0gdGVzdF9mZWF0dXJlc19yaXBlbmluZywgdHlwZSA9IFwicHJvYlwiKVxuYGBgIn0= -->
-<pre class="r"><code># predict on test data
-test_predictions_ripening &lt;- predict(rf_model_ripening, newdata = test_features_ripening)
-test_probabilities_ripening &lt;- predict(rf_model_ripening, newdata = test_features_ripening, type = &quot;prob&quot;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVJeUJsZG1Gc2RXRjBaU0J3WlhKbWIzSnRZVzVqWlZ4dVkyOXVabDl0WVhSeWFYaGZjbWx3Wlc1cGJtY2dQQzBnWTI5dVpuVnphVzl1VFdGMGNtbDRLSFJsYzNSZmNISmxaR2xqZEdsdmJuTmZjbWx3Wlc1cGJtY3NJSFJsYzNSZlptVmhkSFZ5WlhOZmNtbHdaVzVwYm1ja1VtbHdaVzVwYm1jdVUzUmhaMlVwWEc1d2NtbHVkQ2hqYjI1bVgyMWhkSEpwZUY5eWFYQmxibWx1WnlsY2JtQmdZQ0o5IC0tPlxuXG5gYGByXG4jIGV2YWx1YXRlIHBlcmZvcm1hbmNlXG5jb25mX21hdHJpeF9yaXBlbmluZyA8LSBjb25mdXNpb25NYXRyaXgodGVzdF9wcmVkaWN0aW9uc19yaXBlbmluZywgdGVzdF9mZWF0dXJlc19yaXBlbmluZyRSaXBlbmluZy5TdGFnZSlcbnByaW50KGNvbmZfbWF0cml4X3JpcGVuaW5nKVxuYGBgXG5cbjwhLS0gcm5iLXNvdXJjZS1lbmQgLS0+XG4ifQ== -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBldmFsdWF0ZSBwZXJmb3JtYW5jZVxuY29uZl9tYXRyaXhfcmlwZW5pbmcgPC0gY29uZnVzaW9uTWF0cml4KHRlc3RfcHJlZGljdGlvbnNfcmlwZW5pbmcsIHRlc3RfZmVhdHVyZXNfcmlwZW5pbmckUmlwZW5pbmcuU3RhZ2UpXG5wcmludChjb25mX21hdHJpeF9yaXBlbmluZylcbmBgYCJ9 -->
-<pre class="r"><code># evaluate performance
-conf_matrix_ripening &lt;- confusionMatrix(test_predictions_ripening, test_features_ripening$Ripening.Stage)
-print(conf_matrix_ripening)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG48IS0tIHJuYi1zb3VyY2UtYmVnaW4gZXlKa1lYUmhJam9pWUdCZ2NseHVZMjl1Wmw5dFlYUnlhWGhmY21sd1pXNXBibWNrZEdGaWJHVWdJeUJ5WVhjZ1kyOTFiblJ6WEc1Y2JtTnRYMk52ZFc1MGN5QThMU0JqYjI1bVgyMWhkSEpwZUY5eWFYQmxibWx1WnlSMFlXSnNaVnh1WEc1amJWOWtaaUE4TFNCaGN5NWtZWFJoTG1aeVlXMWxLR052Ym1aZmJXRjBjbWw0WDNKcGNHVnVhVzVuSkhSaFlteGxLVnh1WTI5c2JtRnRaWE1vWTIxZlpHWXBJRHd0SUdNb1hDSlNaV1psY21WdVkyVmNJaXdnWENKUWNtVmthV04wWldSY0lpd2dYQ0pEYjNWdWRGd2lLVnh1WEc1blozQnNiM1FvWTIxZlpHWXNJR0ZsY3loNElEMGdVbVZtWlhKbGJtTmxMQ0I1SUQwZ1VISmxaR2xqZEdWa0xDQm1hV3hzSUQwZ1EyOTFiblFwS1NBclhHNGdJR2RsYjIxZmRHbHNaU2dwSUN0Y2JpQWdaMlZ2YlY5MFpYaDBLR0ZsY3loc1lXSmxiQ0E5SUVOdmRXNTBLU3dnYzJsNlpTQTlJRE1wSUN0Y2JpQWdjMk5oYkdWZlptbHNiRjluY21Ga2FXVnVkQ2hzYjNjZ1BTQmNJbmRvYVhSbFhDSXNJR2hwWjJnZ1BTQmNJbk4wWldWc1lteDFaVndpS1NBclhHNGdJSFJvWlcxbFgyMXBibWx0WVd3b0tTQXJYRzRnSUd4aFluTW9kR2wwYkdVZ1BTQmNJa052Ym1aMWMybHZiaUJOWVhSeWFYZ2dVa1lnVW1sd1pXNXBibWNnVTNSaFoyVWdLRU52ZFc1MGN5bGNJaXdnZUNBOUlGd2lVSEpsWkdsamRHVmtYQ0lzSUhrZ1BTQmNJbEpsWm1WeVpXNWpaVndpS1Z4dVlHQmdJbjA9IC0tPlxuXG5gYGByXG5jb25mX21hdHJpeF9yaXBlbmluZyR0YWJsZSAjIHJhdyBjb3VudHNcblxuY21fY291bnRzIDwtIGNvbmZfbWF0cml4X3JpcGVuaW5nJHRhYmxlXG5cbmNtX2RmIDwtIGFzLmRhdGEuZnJhbWUoY29uZl9tYXRyaXhfcmlwZW5pbmckdGFibGUpXG5jb2xuYW1lcyhjbV9kZikgPC0gYyhcIlJlZmVyZW5jZVwiLCBcIlByZWRpY3RlZFwiLCBcIkNvdW50XCIpXG5cbmdncGxvdChjbV9kZiwgYWVzKHggPSBSZWZlcmVuY2UsIHkgPSBQcmVkaWN0ZWQsIGZpbGwgPSBDb3VudCkpICtcbiAgZ2VvbV90aWxlKCkgK1xuICBnZW9tX3RleHQoYWVzKGxhYmVsID0gQ291bnQpLCBzaXplID0gMykgK1xuICBzY2FsZV9maWxsX2dyYWRpZW50KGxvdyA9IFwid2hpdGVcIiwgaGlnaCA9IFwic3RlZWxibHVlXCIpICtcbiAgdGhlbWVfbWluaW1hbCgpICtcbiAgbGFicyh0aXRsZSA9IFwiQ29uZnVzaW9uIE1hdHJpeCBSRiBSaXBlbmluZyBTdGFnZSAoQ291bnRzKVwiLCB4ID0gXCJQcmVkaWN0ZWRcIiwgeSA9IFwiUmVmZXJlbmNlXCIpXG5gYGBcblxuPCEtLSBybmItc291cmNlLWVuZCAtLT5cbiJ9 -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29uZl9tYXRyaXhfcmlwZW5pbmckdGFibGUgIyByYXcgY291bnRzXG5cbmNtX2NvdW50cyA8LSBjb25mX21hdHJpeF9yaXBlbmluZyR0YWJsZVxuXG5jbV9kZiA8LSBhcy5kYXRhLmZyYW1lKGNvbmZfbWF0cml4X3JpcGVuaW5nJHRhYmxlKVxuY29sbmFtZXMoY21fZGYpIDwtIGMoXCJSZWZlcmVuY2VcIiwgXCJQcmVkaWN0ZWRcIiwgXCJDb3VudFwiKVxuXG5nZ3Bsb3QoY21fZGYsIGFlcyh4ID0gUmVmZXJlbmNlLCB5ID0gUHJlZGljdGVkLCBmaWxsID0gQ291bnQpKSArXG4gIGdlb21fdGlsZSgpICtcbiAgZ2VvbV90ZXh0KGFlcyhsYWJlbCA9IENvdW50KSwgc2l6ZSA9IDMpICtcbiAgc2NhbGVfZmlsbF9ncmFkaWVudChsb3cgPSBcIndoaXRlXCIsIGhpZ2ggPSBcInN0ZWVsYmx1ZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIGxhYnModGl0bGUgPSBcIkNvbmZ1c2lvbiBNYXRyaXggUkYgUmlwZW5pbmcgU3RhZ2UgKENvdW50cylcIiwgeCA9IFwiUHJlZGljdGVkXCIsIHkgPSBcIlJlZmVyZW5jZVwiKVxuYGBgIn0= -->
-<pre class="r"><code>conf_matrix_ripening$table # raw counts
-
-cm_counts &lt;- conf_matrix_ripening$table
-
-cm_df &lt;- as.data.frame(conf_matrix_ripening$table)
-colnames(cm_df) &lt;- c(&quot;Reference&quot;, &quot;Predicted&quot;, &quot;Count&quot;)
-
-ggplot(cm_df, aes(x = Reference, y = Predicted, fill = Count)) +
-  geom_tile() +
-  geom_text(aes(label = Count), size = 3) +
-  scale_fill_gradient(low = &quot;white&quot;, high = &quot;steelblue&quot;) +
-  theme_minimal() +
-  labs(title = &quot;Confusion Matrix RF Ripening Stage (Counts)&quot;, x = &quot;Predicted&quot;, y = &quot;Reference&quot;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
 </div>
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiMDFfb2JqZWN0aXZlX3N0b3JhZ2VfcmlwZV9jbGFzc2lmaWNhdGlvbl9tb2RlbHMiCm91dHB1dDogaHRtbF9ub3RlYm9vawplZGl0b3Jfb3B0aW9uczogCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGlubGluZQotLS0KClVzZSB0aGUgYXBwbGUgcGh5c2ljb2NoZW1pY2FsIGRhdGEgZnJvbSB0aGUgRENBIHRyaWFsIFllYXIgMSBhbmQgWWVhciAyLgoKCmBgYHtyfQojIGxvYWQgbGlicmFyaWVzCmxpYnJhcnkoZ2dwbG90MikKbGlicmFyeShjYXJldCkKbGlicmFyeShkb3RlbnYpCmxpYnJhcnkoZHBseXIpCmBgYAoKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjCiMjIyMjIyMjIyMjIyMjIyMjIyMgTG9hZCAuZW52ICMjIyMjIyMjIyMjIyMjIyMjIwojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKCmBgYHtyfQpjYXQoIkxvYWRpbmcgZW52aXJvbm1lbnQgdmFyaWFibGVzIGZyb20gLmVudiBmaWxlLi4uXG4iKQp0cnlDYXRjaCgKICB7CiAgICBkb3RlbnY6OmxvYWRfZG90X2VudigpCiAgICBjYXQoIkVudmlyb25tZW50IHZhcmlhYmxlcyBsb2FkZWQgc3VjY2Vzc2Z1bGx5LlxuIikKICB9LAogIGVycm9yID0gZnVuY3Rpb24oZSkgewogICAgY2F0KCJFcnJvciBsb2FkaW5nIGVudmlyb25tZW50IHZhcmlhYmxlczoiLCBlJG1lc3NhZ2UsICJcbiIpCiAgICBjYXQoIkxvYWRpbmcgZnJvbSBoYXJkY29kZWQgcGF0aCBhcyBmYWxsYmFjay4uLlxuIikKICAgIGRvdGVudjo6bG9hZF9kb3RfZW52KCIvVXNlcnMvbXNwcmlnZ3MvTGlicmFyeS9DbG91ZFN0b3JhZ2UvT25lRHJpdmUtSWxsdW1pbmEsSW5jLi9Eb2N1bWVudHMvQXBwbGllZF9CaW9pbmZvcm1hdGljcy9tb2R1bGVzL21hY2hpbmVfbGVhcm5pbmdfZm9yX21ldGFib2xvbWljcy9hc3NpZ25tZW50L3NjcmlwdHMvLmVudiIpICMgbm9saW50CiAgICBjYXQoIkxvYWRlZCAuZW52IGZyb20gaGFyZGNvZGVkIHBhdGhcbiIpCiAgfQopCmBgYAoKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjCiMjIyMjIyMjIyMjIyMgU2V0IHVwIEdsb2JhbCBTY29wZSAjIyMjIyMjIyMjIyMjIwojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKCmBgYHtyfQpjYXQoIlNldHRpbmcgdXAgZ2xvYmFsIHZhcmlhYmxlcyBhbmQgc291cmNpbmcgdXRpbGl0eSBmdW5jdGlvbnMuLi5cbiIpCldPUktJTkdfRElSIDwtIFN5cy5nZXRlbnYoIldPUktJTkdfRElSIikKCiMgZGVmaW5lIGZpbGUgcGF0aHMKVVRJTFNfRklMRVBBVEggPC0gZmlsZS5wYXRoKFdPUktJTkdfRElSLCAic2NyaXB0cyIsICIwMF9kYXRhX3ByZXBfdXRpbHMuUiIpCkRBVEFfRElSIDwtIGZpbGUucGF0aChXT1JLSU5HX0RJUiwgIkFzc2lnbm1lbnRfRGF0YSIpCk9VVFBVVF9ESVIgPC0gZmlsZS5wYXRoKFdPUktJTkdfRElSLCAib3V0cHV0cyIpClBMT1RTX0RJUiA8LSBmaWxlLnBhdGgoT1VUUFVUX0RJUiwgInBsb3RzIikKCmRhdGVfc3RyIDwtIGZvcm1hdChTeXMuRGF0ZSgpLCAiJVktJW0tJWQiKQpgYGAKCllvdSB3aWxsIHVzZSB0aGUgZGF0YSBmcm9tIFllYXIxIHRvIHRyYWluIGFuZCBvcHRpbWlzZSB0aGUgY2xhc3NpZmljYXRpb24gbW9kZWwgYW5kIHRoZSBkYXRhIGZyb20gWWVhcjIgdG8gdmFsaWRhdGUgaXRzIHBlcmZvcm1hbmNlCgpgYGB7cn0KIyBzb3VyY2UgdXRpbGl0eSBmdW5jdGlvbnMKc291cmNlKFVUSUxTX0ZJTEVQQVRIKQpwcmludChwYXN0ZSgiVXRpbGl0eSBmdW5jdGlvbnMgc291cmNlZCBmcm9tOiIsIFVUSUxTX0ZJTEVQQVRIKSkKYGBgCgojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKIyMjIyMjIyMjIyMjIyMjIyMjIyBNYWluICMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwoKCmBgYHtyfQojIGxvYWQgRENBIFllYXIgb25lIGFzIHRyYWluIGRhdGEKdHJhaW5pbmdfZGF0YSA8LSBsb2FkX2RhdGEoZmlsZS5wYXRoKERBVEFfRElSLCAiRENBX1llYXIxLmNzdiIpKQoKIyBsb2FkIERDQSBZZWFyIHR3byBhcyB0ZXN0IGRhdGEKdGVzdF9kYXRhIDwtIGxvYWRfZGF0YShmaWxlLnBhdGgoREFUQV9ESVIsICJEQ0FfWWVhcjIuY3N2IikpCmBgYAoKYGBge3J9CiMgcmVtb3ZlIG1pc3NpbmcgdmFsdWVzIGZyb20gRENBIFllYXIgMQp0cmFpbmluZ19kYXRhIDwtIHRyYWluaW5nX2RhdGEgJT4lIGRyb3BfbmEoKQpgYGAKCmBgYHtyfQojIGluZmVyIG1lYW4gZm9yIG5hIHZhbHVlcyBpbiBEQ0EgWWVhciAyCnRlc3RfZGF0YSA8LSBpbmZlcl9tZWFuX2Zvcl9uYW4odGVzdF9kYXRhKQpgYGAKCgoKYGBge3J9CiMgRml4IGNvbHVtbiBuYW1lIG1pc21hdGNoCmNvbG5hbWVzKHRyYWluaW5nX2RhdGEpW2NvbG5hbWVzKHRyYWluaW5nX2RhdGEpID09ICJYN09ILkFCQSJdIDwtICJYNy5PSC5BQkEiCmBgYAoKYGBge3J9CiMgZXh0cmFjdCBmZWF0dXJlcyBhbmQgbGFiZWxzCnRyYWluaW5nX3NhbXBsZXMgPC0gZXh0cmFjdF9zYW1wbGVfbmFtZXModHJhaW5pbmdfZGF0YSkKcm93bmFtZXModHJhaW5pbmdfZGF0YSkgPC0gdHJhaW5pbmdfc2FtcGxlcwp0cmFpbmluZ19kYXRhIDwtIHRyYWluaW5nX2RhdGFbLCAtMV0KCnRlc3Rfc2FtcGxlcyA8LSBleHRyYWN0X3NhbXBsZV9uYW1lcyh0ZXN0X2RhdGEpCnJvd25hbWVzKHRlc3RfZGF0YSkgPC0gdGVzdF9zYW1wbGVzCnRlc3RfZGF0YSA8LSB0ZXN0X2RhdGFbLCAtMV0KYGBgCgpgYGB7cn0KIyBjb252ZXJ0IHN0b3JhZ2Uud2VlayBhbmQgcmlwZW5pbmcuc3RhZ2UgdG8gZmFjdG9ycwp0cmFpbmluZ19kYXRhIDwtIG11dGF0ZV9kZl9mYWN0b3JzKHRyYWluaW5nX2RhdGEpCnRlc3RfZGF0YSA8LSBtdXRhdGVfZGZfZmFjdG9ycyh0ZXN0X2RhdGEpCgojIHNldCBvcmRlciBvZiBmYWN0b3IgbGV2ZWxzCnJpcGVuZXNzX3N0YWdlc19vcmRlciA8LSBjKCJFYXJseSIsICJNaWQiLCAiTGF0ZSIpCgp0cmFpbmluZ19kYXRhJFJpcGVuaW5nLlN0YWdlIDwtIGZhY3Rvcih0cmFpbmluZ19kYXRhJFJpcGVuaW5nLlN0YWdlLCBsZXZlbHMgPSByaXBlbmVzc19zdGFnZXNfb3JkZXIpCnRlc3RfZGF0YSRSaXBlbmluZy5TdGFnZSA8LSBmYWN0b3IodGVzdF9kYXRhJFJpcGVuaW5nLlN0YWdlLCBsZXZlbHMgPSByaXBlbmVzc19zdGFnZXNfb3JkZXIpCmBgYAoKYGBge3J9CiMgQ2hlY2sgdGhlIHByb3BvcnRpb24gb2YgZWFjaCBjbGFzcyBpbiB0aGUgZGF0YXNldCBmb3IgdHJhaW5pbmdfZGF0YQpyb3VuZChwcm9wLnRhYmxlKHRhYmxlKHRyYWluaW5nX2RhdGEkU3RvcmFnZS5XZWVrKSkgKiAxMDAsIDIpCmBgYAoKYGBge3J9CiMgZ2V0IG51bWJlciBvZiBzYW1wbGVzIGluIGVhY2ggY2xhc3MKdGFibGUodHJhaW5pbmdfZGF0YSRTdG9yYWdlLldlZWspCmBgYAoKZ29vZCBiYWxhbmNlLiBXZWVrIDAgaGFzIGEgc2xpZ2h0bHkgaGlnaGVyIHByb3BvcnRpb24sIGJ1dCB0aGlzIGlzbid0IGEgbWFqb3IgY29uY2Vybi4KCmBgYHtyfQpyb3VuZChwcm9wLnRhYmxlKHRhYmxlKHRyYWluaW5nX2RhdGEkUmlwZW5pbmcuU3RhZ2UpKSAqIDEwMCwgMikKYGBgCgpgYGB7cn0KIyBnZXQgbnVtYmVyIG9mIHNhbXBsZXMgaW4gZWFjaCBjbGFzcwp0YWJsZSh0cmFpbmluZ19kYXRhJFJpcGVuaW5nLlN0YWdlKQpgYGAKCmVhcmx5IHN0YWdlIGlzIG92ZXJyZXByZXNlbnRlZCwgZm9jdXMgb24gc3RvcmFnZSB3ZWVrIGNsYXNzaWZpY2F0aW9uIGZpcnN0CgojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKIyMjIyMjIyMjIyMjIyMjIyBEYXRhIFByZXBhcmF0aW9uICMjIyMjIyMjIyMjIyMjCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwoKRmlyc3QgbW9kZWw6IGNsYXNzaWZ5IHN0b3JhZ2Ugd2VlayB1c2luZyBTdG9yYWdlLldlZWsgYXMgdGhlIGxhYmVsIGFuZCBhbGwgb3RoZXIgZmVhdHVyZXMgYXMgcHJlZGljdG9ycwpgYGB7cn0KIyByZW1vdmUgcmlwZW5pbmcgc3RhZ2UsIHVzZSBvbmx5IHN0b3JhZ2Ugd2VlayBmb3IgY2xhc3NpZmljYXRpb24KdHJhaW5pbmdfZmVhdHVyZXMgPC0gdHJhaW5pbmdfZGF0YSAlPiUKICBkcGx5cjo6c2VsZWN0KC1SaXBlbmluZy5TdGFnZSkKYGBgCgoKCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwojIyMjIyMjIyMjIyMjIyMjIE1vZGVsIFRyYWluaW5nIChTdG9yYWdlIFdlZWspICMjIyMjIyMjIyMjIyMjIyMKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjCgpgYGB7cn0KIyByZW5hbWUgU3RvcmFnZS5XZWVrIGxldmVscyB0byB2YWxpZCBSIHZhcmlhYmxlIG5hbWVzCnRyYWluaW5nX2ZlYXR1cmVzJFN0b3JhZ2UuV2VlayA8LSBmYWN0b3IoCiAgdHJhaW5pbmdfZmVhdHVyZXMkU3RvcmFnZS5XZWVrLAogIGxldmVscyA9IGxldmVscyh0cmFpbmluZ19mZWF0dXJlcyRTdG9yYWdlLldlZWspLAogIGxhYmVscyA9IHBhc3RlMCgiV2Vla18iLCBsZXZlbHModHJhaW5pbmdfZmVhdHVyZXMkU3RvcmFnZS5XZWVrKSkKKQpgYGAKCgpgYGB7cn0KIyB1c2Ugc3RyYXRpZmllZCBrLWZvbGQgY3Jvc3MtdmFsaWRhdGlvbiAoZW5zdXJlcyBhbGwgd2Vla3MgaW4gZWFjaCBmb2xkKQp0cmFpbl9jb250cm9sIDwtIHRyYWluQ29udHJvbCgKICBtZXRob2QgPSAiY3YiLAogIG51bWJlciA9IDUsCiAgY2xhc3NQcm9icyA9IFRSVUUsCiAgc3VtbWFyeUZ1bmN0aW9uID0gbXVsdGlDbGFzc1N1bW1hcnksCiAgc2F2ZVByZWRpY3Rpb25zID0gImZpbmFsIiwKICBpbmRleCA9IGNyZWF0ZUZvbGRzKHRyYWluaW5nX2ZlYXR1cmVzJFN0b3JhZ2UuV2VlaywgayA9IDUsIGxpc3QgPSBUUlVFLCByZXR1cm5UcmFpbiA9IFRSVUUpCikKCnNldC5zZWVkKDEyMykgIyBmb3IgcmVwcm9kdWNpYmlsaXR5CiMgRGVmaW5lIHBhcmFtZXRlciBncmlkCnR1bmVfZ3JpZCA8LSBleHBhbmQuZ3JpZChtdHJ5ID0gYyg1LCAxMCwgMTUsIDIwLCAyNSkpCgojIFRyYWluIHdpdGggZ3JpZCBzZWFyY2gKcmZfbW9kZWwgPC0gdHJhaW4oCiAgU3RvcmFnZS5XZWVrIH4gLiwKICBkYXRhID0gdHJhaW5pbmdfZmVhdHVyZXMsCiAgbWV0aG9kID0gInJmIiwKICB0ckNvbnRyb2wgPSB0cmFpbl9jb250cm9sLAogIHR1bmVHcmlkID0gdHVuZV9ncmlkLAogIG1ldHJpYyA9ICJBY2N1cmFjeSIsCiAgbnRyZWUgPSAxMDAwLAogIGltcG9ydGFuY2UgPSBUUlVFLAogIHByZVByb2Nlc3MgPSBjKCJjZW50ZXIiLCAic2NhbGUiKQopCmBgYAoKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjCiMjIyMjIyMjIyMgVGVzdCBNb2RlbCB3aXRoIERDQSBZZWFyIDIgIyMjIyMjIyMjIwojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKCmBgYHtyfQojIFByZXBhcmUgdGVzdCBkYXRhCnRlc3RfZmVhdHVyZXMgPC0gdGVzdF9kYXRhICU+JQogIGRwbHlyOjpzZWxlY3QoLVJpcGVuaW5nLlN0YWdlKQpgYGAKCgpgYGB7cn0KIyByZW5hbWUgU3RvcmFnZS5XZWVrIHRvIHN0cmluZy4KdGVzdF9mZWF0dXJlcyRTdG9yYWdlLldlZWsgPC0gZmFjdG9yKAogIHRlc3RfZmVhdHVyZXMkU3RvcmFnZS5XZWVrLAogIGxldmVscyA9IGxldmVscyh0ZXN0X2ZlYXR1cmVzJFN0b3JhZ2UuV2VlayksCiAgbGFiZWxzID0gcGFzdGUwKCJXZWVrXyIsIGxldmVscyh0ZXN0X2ZlYXR1cmVzJFN0b3JhZ2UuV2VlaykpCikKYGBgCgpgYGB7cn0KIyBQcmVkaWN0IG9uIHRlc3QgZGF0YQp0ZXN0X3ByZWRpY3Rpb25zIDwtIHByZWRpY3QocmZfbW9kZWwsIG5ld2RhdGEgPSB0ZXN0X2ZlYXR1cmVzKQp0ZXN0X3Byb2JhYmlsaXRpZXMgPC0gcHJlZGljdChyZl9tb2RlbCwgbmV3ZGF0YSA9IHRlc3RfZmVhdHVyZXMsIHR5cGUgPSAicHJvYiIpCmBgYAoKYGBge3J9CiMgRXZhbHVhdGUgcGVyZm9ybWFuY2UKY29uZl9tYXRyaXggPC0gY29uZnVzaW9uTWF0cml4KHRlc3RfcHJlZGljdGlvbnMsIHRlc3RfZmVhdHVyZXMkU3RvcmFnZS5XZWVrKQpwcmludChjb25mX21hdHJpeCkKYGBgCgpgYGB7cn0KY29uZl9tYXRyaXgkdGFibGUgIyByYXcgY291bnRzCgpjbV9jb3VudHMgPC0gY29uZl9tYXRyaXgkdGFibGUKCmNtX2RmIDwtIGFzLmRhdGEuZnJhbWUoY29uZl9tYXRyaXgkdGFibGUpCmNvbG5hbWVzKGNtX2RmKSA8LSBjKCJSZWZlcmVuY2UiLCAiUHJlZGljdGVkIiwgIkNvdW50IikKCmdncGxvdChjbV9kZiwgYWVzKHggPSBSZWZlcmVuY2UsIHkgPSBQcmVkaWN0ZWQsIGZpbGwgPSBDb3VudCkpICsKICBnZW9tX3RpbGUoKSArCiAgZ2VvbV90ZXh0KGFlcyhsYWJlbCA9IENvdW50KSwgc2l6ZSA9IDMpICsKICBzY2FsZV9maWxsX2dyYWRpZW50KGxvdyA9ICJ3aGl0ZSIsIGhpZ2ggPSAic3RlZWxibHVlIikgKwogIHRoZW1lX21pbmltYWwoKSArCiAgbGFicyh0aXRsZSA9ICJDb25mdXNpb24gTWF0cml4IFJGIFN0b3JhZ2UgV2Vla3MgKENvdW50cykiLCB4ID0gIlByZWRpY3RlZCIsIHkgPSAiUmVmZXJlbmNlIikKYGBgCgojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwojIyMjIyMjIyMjIyMjIyMjIE1vZGVsIFRyYWluaW5nIChSaXBlbmluZyBTdGFnZSkgIyMjIyMjIyMjIyMjIyMjIwojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwoKYGBge3J9CiMgcmVtb3ZlIHN0b3JhZ2Ugd2VlaywgdXNlIG9ubHkgcmlwZW5pbmcgc3RhZ2UgZm9yIGNsYXNzaWZpY2F0aW9uCnRyYWluaW5nX2ZlYXR1cmVzX3JpcGVuaW5nIDwtIHRyYWluaW5nX2RhdGEgJT4lCiAgZHBseXI6OnNlbGVjdCgtU3RvcmFnZS5XZWVrKQpgYGAKCmBgYHtyfQojIHRyYWluIGNvbnRyb2wgZm9yIHJpcGVuaW5nIHN0YWdlCnRyYWluX2NvbnRyb2wgPC0gdHJhaW5Db250cm9sKAogIG1ldGhvZCA9ICJjdiIsCiAgbnVtYmVyID0gNSwKICBjbGFzc1Byb2JzID0gVFJVRSwKICBzdW1tYXJ5RnVuY3Rpb24gPSBtdWx0aUNsYXNzU3VtbWFyeSwKICBzYXZlUHJlZGljdGlvbnMgPSAiZmluYWwiLAogIGluZGV4ID0gY3JlYXRlRm9sZHModHJhaW5pbmdfZmVhdHVyZXNfcmlwZW5pbmckUmlwZW5pbmcuU3RhZ2UsIGsgPSA1LCBsaXN0ID0gVFJVRSwgcmV0dXJuVHJhaW4gPSBUUlVFKQopCgpzZXQuc2VlZCgxMjMpICMgZm9yIHJlcHJvZHVjaWJpbGl0eQojIERlZmluZSBwYXJhbWV0ZXIgZ3JpZAp0dW5lX2dyaWQgPC0gZXhwYW5kLmdyaWQobXRyeSA9IGMoNSwgMTAsIDE1LCAyMCwgMjUpKQoKIyBUcmFpbiB3aXRoIGdyaWQgc2VhcmNoCnJmX21vZGVsX3JpcGVuaW5nIDwtIHRyYWluKAogIFJpcGVuaW5nLlN0YWdlIH4gLiwKICBkYXRhID0gdHJhaW5pbmdfZmVhdHVyZXNfcmlwZW5pbmcsCiAgbWV0aG9kID0gInJmIiwKICB0ckNvbnRyb2wgPSB0cmFpbl9jb250cm9sLAogIHR1bmVHcmlkID0gdHVuZV9ncmlkLAogIG1ldHJpYyA9ICJBY2N1cmFjeSIsCiAgbnRyZWUgPSAxMDAwLAogIGltcG9ydGFuY2UgPSBUUlVFLAogIHByZVByb2Nlc3MgPSBjKCJjZW50ZXIiLCAic2NhbGUiKQopCmBgYAoKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwojIyMjIyMjIyMjIFRlc3QgUmlwZW5pbmcgU3RhZ2UgTW9kZWwgd2l0aCBEQ0EgWWVhciAyICMjIyMjIyMjIyMKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwoKYGBge3J9CiMgUHJlcGFyZSB0ZXN0IGRhdGEKdGVzdF9mZWF0dXJlc19yaXBlbmluZyA8LSB0ZXN0X2RhdGEgJT4lCiAgZHBseXI6OnNlbGVjdCgtU3RvcmFnZS5XZWVrKQpgYGAKCmBgYHtyfQojIHByZWRpY3Qgb24gdGVzdCBkYXRhCnRlc3RfcHJlZGljdGlvbnNfcmlwZW5pbmcgPC0gcHJlZGljdChyZl9tb2RlbF9yaXBlbmluZywgbmV3ZGF0YSA9IHRlc3RfZmVhdHVyZXNfcmlwZW5pbmcpCnRlc3RfcHJvYmFiaWxpdGllc19yaXBlbmluZyA8LSBwcmVkaWN0KHJmX21vZGVsX3JpcGVuaW5nLCBuZXdkYXRhID0gdGVzdF9mZWF0dXJlc19yaXBlbmluZywgdHlwZSA9ICJwcm9iIikKYGBgCgpgYGB7cn0KIyBldmFsdWF0ZSBwZXJmb3JtYW5jZQpjb25mX21hdHJpeF9yaXBlbmluZyA8LSBjb25mdXNpb25NYXRyaXgodGVzdF9wcmVkaWN0aW9uc19yaXBlbmluZywgdGVzdF9mZWF0dXJlc19yaXBlbmluZyRSaXBlbmluZy5TdGFnZSkKcHJpbnQoY29uZl9tYXRyaXhfcmlwZW5pbmcpCmBgYAoKYGBge3J9CmNvbmZfbWF0cml4X3JpcGVuaW5nJHRhYmxlICMgcmF3IGNvdW50cwoKY21fY291bnRzIDwtIGNvbmZfbWF0cml4X3JpcGVuaW5nJHRhYmxlCgpjbV9kZiA8LSBhcy5kYXRhLmZyYW1lKGNvbmZfbWF0cml4X3JpcGVuaW5nJHRhYmxlKQpjb2xuYW1lcyhjbV9kZikgPC0gYygiUmVmZXJlbmNlIiwgIlByZWRpY3RlZCIsICJDb3VudCIpCgpnZ3Bsb3QoY21fZGYsIGFlcyh4ID0gUmVmZXJlbmNlLCB5ID0gUHJlZGljdGVkLCBmaWxsID0gQ291bnQpKSArCiAgZ2VvbV90aWxlKCkgKwogIGdlb21fdGV4dChhZXMobGFiZWwgPSBDb3VudCksIHNpemUgPSAzKSArCiAgc2NhbGVfZmlsbF9ncmFkaWVudChsb3cgPSAid2hpdGUiLCBoaWdoID0gInN0ZWVsYmx1ZSIpICsKICB0aGVtZV9taW5pbWFsKCkgKwogIGxhYnModGl0bGUgPSAiQ29uZnVzaW9uIE1hdHJpeCBSRiBSaXBlbmluZyBTdGFnZSAoQ291bnRzKSIsIHggPSAiUHJlZGljdGVkIiwgeSA9ICJSZWZlcmVuY2UiKQpgYGAK</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiMDJfb2JqZWN0aXZlX2RjYV9jYV9jbGFmZmljaWF0aW9uX21vZGVsLlJtZCIKb3V0cHV0OiBodG1sX25vdGVib29rCmVkaXRvcl9vcHRpb25zOiAKICBjaHVua19vdXRwdXRfdHlwZTogaW5saW5lCi0tLQoKT2JqZWN0aXZlOiBBbmFseXplIGFwcGxlIHBoeXNpY29jaGVtaWNhbCBkYXRhIHRvIGRpZmZlcmVudGlhdGUgYmV0d2VlbiBEQ0EgYW5kIENBIHRyZWF0bWVudHMgdXNpbmcgbXVsdGl2YXJpYXRlIHRpbWUtc2VyaWVzIGNsYXNzaWZpZXJzLgoKYGBge3J9CiMgbG9hZCBsaWJyYXJpZXMKbGlicmFyeShnZ3Bsb3QyKQpsaWJyYXJ5KGNhcmV0KQpsaWJyYXJ5KGRvdGVudikKbGlicmFyeShkcGx5cikKYGBgCgojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKIyMjIyMjIyMjIyMjIyMjIyMjIyBMb2FkIC5lbnYgIyMjIyMjIyMjIyMjIyMjIyMjCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwoKYGBge3J9CmNhdCgiTG9hZGluZyBlbnZpcm9ubWVudCB2YXJpYWJsZXMgZnJvbSAuZW52IGZpbGUuLi5cbiIpCnRyeUNhdGNoKAogIHsKICAgIGRvdGVudjo6bG9hZF9kb3RfZW52KCkKICAgIGNhdCgiRW52aXJvbm1lbnQgdmFyaWFibGVzIGxvYWRlZCBzdWNjZXNzZnVsbHkuXG4iKQogIH0sCiAgZXJyb3IgPSBmdW5jdGlvbihlKSB7CiAgICBjYXQoIkVycm9yIGxvYWRpbmcgZW52aXJvbm1lbnQgdmFyaWFibGVzOiIsIGUkbWVzc2FnZSwgIlxuIikKICAgIGNhdCgiTG9hZGluZyBmcm9tIGhhcmRjb2RlZCBwYXRoIGFzIGZhbGxiYWNrLi4uXG4iKQogICAgZG90ZW52Ojpsb2FkX2RvdF9lbnYoIi9Vc2Vycy9tc3ByaWdncy9MaWJyYXJ5L0Nsb3VkU3RvcmFnZS9PbmVEcml2ZS1JbGx1bWluYSxJbmMuL0RvY3VtZW50cy9BcHBsaWVkX0Jpb2luZm9ybWF0aWNzL21vZHVsZXMvbWFjaGluZV9sZWFybmluZ19mb3JfbWV0YWJvbG9taWNzL2Fzc2lnbm1lbnQvc2NyaXB0cy8uZW52IikgIyBub2xpbnQKICAgIGNhdCgiTG9hZGVkIC5lbnYgZnJvbSBoYXJkY29kZWQgcGF0aFxuIikKICB9CikKYGBgCgojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKIyMjIyMjIyMjIyMjIyBTZXQgdXAgR2xvYmFsIFNjb3BlICMjIyMjIyMjIyMjIyMjCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwoKYGBge3J9CmNhdCgiU2V0dGluZyB1cCBnbG9iYWwgdmFyaWFibGVzIGFuZCBzb3VyY2luZyB1dGlsaXR5IGZ1bmN0aW9ucy4uLlxuIikKV09SS0lOR19ESVIgPC0gU3lzLmdldGVudigiV09SS0lOR19ESVIiKQoKIyBkZWZpbmUgZmlsZSBwYXRocwpVVElMU19GSUxFUEFUSCA8LSBmaWxlLnBhdGgoV09SS0lOR19ESVIsICJzY3JpcHRzIiwgIjAwX2RhdGFfcHJlcF91dGlscy5SIikKREFUQV9ESVIgPC0gZmlsZS5wYXRoKFdPUktJTkdfRElSLCAiQXNzaWdubWVudF9EYXRhIikKT1VUUFVUX0RJUiA8LSBmaWxlLnBhdGgoV09SS0lOR19ESVIsICJvdXRwdXRzIikKUExPVFNfRElSIDwtIGZpbGUucGF0aChPVVRQVVRfRElSLCAicGxvdHMiKQoKZGF0ZV9zdHIgPC0gZm9ybWF0KFN5cy5EYXRlKCksICIlWS0lbS0lZCIpCmBgYAoKWW91IHdpbGwgdXNlIHRoZSBkYXRhIGZyb20gWWVhcjEgdG8gdHJhaW4gYW5kIG9wdGltaXNlIHRoZSBjbGFzc2lmaWNhdGlvbiBtb2RlbCBhbmQgdGhlIGRhdGEgZnJvbSBZZWFyMiB0byB2YWxpZGF0ZSBpdHMgcGVyZm9ybWFuY2UKCmBgYHtyfQojIHNvdXJjZSB1dGlsaXR5IGZ1bmN0aW9ucwpzb3VyY2UoVVRJTFNfRklMRVBBVEgpCnByaW50KHBhc3RlKCJVdGlsaXR5IGZ1bmN0aW9ucyBzb3VyY2VkIGZyb206IiwgVVRJTFNfRklMRVBBVEgpKQpgYGAKCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwojIyMjIyMjIyMjIyMjIyMjIyMjIE1haW4gIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjCgpgYGB7cn0KIyBsb2FkIERDQSBZZWFyIG9uZSBhcyB0cmFpbiBkYXRhCnRyYWluaW5nX2RhdGEgPC0gbG9hZF9kYXRhKGZpbGUucGF0aChEQVRBX0RJUiwgIkRDQV9ZZWFyMS5jc3YiKSkKCmBgYAoK</div>
 
 
 
@@ -2286,7 +1908,7 @@ $(document).ready(function () {
 <!-- code folding -->
 <script>
 $(document).ready(function () {
-  window.initializeSourceEmbed("01_objective_storage_ripe_classification_models.Rmd");
+  window.initializeSourceEmbed("02_objective_dca_ca_clafficiation_model.Rmd");
   window.initializeCodeFolding("show" === "show");
 });
 </script>

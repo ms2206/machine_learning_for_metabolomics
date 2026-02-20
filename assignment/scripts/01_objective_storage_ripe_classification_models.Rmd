@@ -106,6 +106,12 @@ test_data <- test_data[, -1]
 # convert storage.week and ripening.stage to factors
 training_data <- mutate_df_factors(training_data)
 test_data <- mutate_df_factors(test_data)
+
+# set order of factor levels
+ripeness_stages_order <- c("Early", "Mid", "Late")
+
+training_data$Ripening.Stage <- factor(training_data$Ripening.Stage, levels = ripeness_stages_order)
+test_data$Ripening.Stage <- factor(test_data$Ripening.Stage, levels = ripeness_stages_order)
 ```
 
 ```{r}
@@ -181,7 +187,7 @@ rf_model <- train(
   trControl = train_control,
   tuneGrid = tune_grid,
   metric = "Accuracy",
-  ntree = 1000, # Increased trees
+  ntree = 1000,
   importance = TRUE,
   preProcess = c("center", "scale")
 )
@@ -199,7 +205,7 @@ test_features <- test_data %>%
 
 
 ```{r}
-# rename Storage.Week levels to match training data
+# rename Storage.Week to string.
 test_features$Storage.Week <- factor(
   test_features$Storage.Week,
   levels = levels(test_features$Storage.Week),
@@ -219,6 +225,22 @@ conf_matrix <- confusionMatrix(test_predictions, test_features$Storage.Week)
 print(conf_matrix)
 ```
 
+```{r}
+conf_matrix$table # raw counts
+
+cm_counts <- conf_matrix$table
+
+cm_df <- as.data.frame(conf_matrix$table)
+colnames(cm_df) <- c("Reference", "Predicted", "Count")
+
+ggplot(cm_df, aes(x = Reference, y = Predicted, fill = Count)) +
+  geom_tile() +
+  geom_text(aes(label = Count), size = 3) +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  theme_minimal() +
+  labs(title = "Confusion Matrix RF Storage Weeks (Counts)", x = "Predicted", y = "Reference")
+```
+
 #################################################################
 ################ Model Training (Ripening Stage) ################
 #################################################################
@@ -230,32 +252,31 @@ training_features_ripening <- training_data %>%
 ```
 
 ```{r}
+# train control for ripening stage
 train_control <- trainControl(
   method = "cv",
-  initialWindow = floor(0.8 * nrow(training_features_ripening)),
-  horizon = floor(0.2 * nrow(training_features_ripening)),
-  fixedWindow = FALSE,
+  number = 5,
   classProbs = TRUE,
   summaryFunction = multiClassSummary,
-  savePredictions = "final"
+  savePredictions = "final",
+  index = createFolds(training_features_ripening$Ripening.Stage, k = 5, list = TRUE, returnTrain = TRUE)
 )
-
-# Calculate class weights
-class_counts <- table(training_features_ripening$Ripening.Stage)
-class_weights <- max(class_counts) / class_counts
 
 set.seed(123) # for reproducibility
 # Define parameter grid
-tune_grid_ripening <- expand.grid(mtry = c(5, 10, 15, 20, 25))
+tune_grid <- expand.grid(mtry = c(5, 10, 15, 20, 25))
 
-# Train with class weights
-rf_model_ripening <- randomForest(
+# Train with grid search
+rf_model_ripening <- train(
   Ripening.Stage ~ .,
   data = training_features_ripening,
-  ntree = 500,
-  mtry = 20,
-  classwt = class_weights,
-  importance = TRUE
+  method = "rf",
+  trControl = train_control,
+  tuneGrid = tune_grid,
+  metric = "Accuracy",
+  ntree = 1000,
+  importance = TRUE,
+  preProcess = c("center", "scale")
 )
 ```
 
@@ -279,4 +300,20 @@ test_probabilities_ripening <- predict(rf_model_ripening, newdata = test_feature
 # evaluate performance
 conf_matrix_ripening <- confusionMatrix(test_predictions_ripening, test_features_ripening$Ripening.Stage)
 print(conf_matrix_ripening)
+```
+
+```{r}
+conf_matrix_ripening$table # raw counts
+
+cm_counts <- conf_matrix_ripening$table
+
+cm_df <- as.data.frame(conf_matrix_ripening$table)
+colnames(cm_df) <- c("Reference", "Predicted", "Count")
+
+ggplot(cm_df, aes(x = Reference, y = Predicted, fill = Count)) +
+  geom_tile() +
+  geom_text(aes(label = Count), size = 3) +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  theme_minimal() +
+  labs(title = "Confusion Matrix RF Ripening Stage (Counts)", x = "Predicted", y = "Reference")
 ```
