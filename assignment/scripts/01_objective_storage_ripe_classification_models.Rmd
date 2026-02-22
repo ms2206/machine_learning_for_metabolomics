@@ -490,6 +490,7 @@ test_features_ripening$Ripening.Stage <- factor(
   levels = levels(training_features_ripening$Ripening.Stage) # match levels to training data
 )
 ```
+
 ```{r}
 # predict on test data
 test_predictions_ripening <- predict(rf_model_ripening, newdata = test_features_ripening)
