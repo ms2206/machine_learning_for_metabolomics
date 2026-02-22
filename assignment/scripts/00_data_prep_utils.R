@@ -79,3 +79,33 @@ save_plot <- function(plot_obj, filename, output_dir) {
     ggplot2::ggsave(filepath, plot = plot_obj, width = 10, height = 8, dpi = 300) # nolint
     cat("Plot saved to:", filepath, "\n")
 }
+
+# Function to swap train/test data
+switch_training_test_data <- function(train_data, test_data) {
+    # Swap training and test data
+    swapped_train <- test_data
+    swapped_test <- train_data
+
+    # Return as a list
+    return(list(
+        training_data = swapped_train,
+        test_data = swapped_test
+    ))
+}
+
+# Function to plot confusion matrix as a heatmap
+plot_confusion_matrix <- function(conf_matrix, title = "Confusion Matrix") {
+    # Convert confusion matrix to data frame
+    cm_df <- as.data.frame(conf_matrix$table)
+    colnames(cm_df) <- c("Reference", "Predicted", "Count")
+    
+    # Create and return ggplot
+    plot <- ggplot2::ggplot(cm_df, ggplot2::aes(x = Reference, y = Predicted, fill = Count)) +
+        ggplot2::geom_tile() +
+        ggplot2::geom_text(ggplot2::aes(label = Count), size = 3) +
+        ggplot2::scale_fill_gradient(low = "white", high = "steelblue") +
+        ggplot2::theme_minimal() +
+        ggplot2::labs(title = title, x = "Predicted", y = "Reference")
+    
+    return(plot)
+}

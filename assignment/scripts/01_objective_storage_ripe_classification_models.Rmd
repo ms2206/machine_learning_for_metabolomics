@@ -153,6 +153,8 @@ training_features <- training_data %>%
 ###############################################################
 ################ Model Training (Storage Week) ################
 ###############################################################
+# Train: Year 1
+# Test: Year 2
 
 ```{r}
 # rename Storage.Week levels to valid R variable names
@@ -213,6 +215,114 @@ test_features$Storage.Week <- factor(
 )
 ```
 
+
+
+```{r}
+# Predict on test data
+test_predictions <- predict(rf_model, newdata = test_features)
+test_probabilities <- predict(rf_model, newdata = test_features, type = "prob")
+```
+
+```{r}
+# Align factor levels between predictions and test data
+test_features$Storage.Week <- factor(
+  test_features$Storage.Week,
+  levels = levels(training_features$Storage.Week) # match levels to training data
+)
+```
+
+```{r}  
+# Evaluate performance
+conf_matrix <- confusionMatrix(test_predictions, test_features$Storage.Week)
+print(conf_matrix)
+```
+
+```{r}
+plot_confusion_matrix(conf_matrix, title = "Confusion Matrix RF Storage Weeks (Counts) Trained on DCA Year 1, Tested on DCA Year 2")
+```
+
+###############################################################
+################ Model Training (Storage Week) ################
+###############################################################
+# Train: Year 2
+# Test: Year 1
+
+```{r}
+# swap training and test data to use Year 1 for test and Year 2 for training
+
+list_datasets <- switch_training_test_data(training_data, test_data)
+training_data <- list_datasets$training_data
+test_data <- list_datasets$test_data
+```
+
+```{r}
+# remove ripening stage, use only storage week for classification
+training_features <- training_data %>%
+  dplyr::select(-Ripening.Stage)
+```
+
+```{r}
+# rename Storage.Week levels to valid R variable names
+training_features$Storage.Week <- factor(
+  training_features$Storage.Week,
+  levels = levels(training_features$Storage.Week),
+  labels = paste0("Week_", levels(training_features$Storage.Week))
+)
+```
+
+```{r}
+train_control <- trainControl(
+  method = "cv",
+  number = 5,
+  classProbs = TRUE,
+  summaryFunction = multiClassSummary,
+  savePredictions = "final",
+  index = createFolds(training_features$Storage.Week, k = 5, list = TRUE, returnTrain = TRUE)
+)
+
+set.seed(123) # for reproducibility
+# Define parameter grid
+tune_grid <- expand.grid(mtry = c(5, 10, 15, 20, 25))
+
+# Train with grid search
+rf_model <- train(
+  Storage.Week ~ .,
+  data = training_features,
+  method = "rf",
+  trControl = train_control,
+  tuneGrid = tune_grid,
+  metric = "Accuracy",
+  ntree = 1000,
+  importance = TRUE,
+  preProcess = c("center", "scale")
+)
+```
+################################################
+########## Test Model with DCA Year 1 ##########
+################################################
+
+```{r}
+test_features <- test_data %>%
+  dplyr::select(-Ripening.Stage)
+```
+
+```{r}
+# rename Storage.Week to string.
+test_features$Storage.Week <- factor(
+  test_features$Storage.Week,
+  levels = levels(test_features$Storage.Week),
+  labels = paste0("Week_", levels(test_features$Storage.Week))
+)
+```
+
+```{r}
+# Align factor levels between predictions and test data
+test_features$Storage.Week <- factor(
+  test_features$Storage.Week,
+  levels = levels(training_features$Storage.Week) # match levels to training data
+)
+```
+
 ```{r}
 # Predict on test data
 test_predictions <- predict(rf_model, newdata = test_features)
@@ -223,27 +333,28 @@ test_probabilities <- predict(rf_model, newdata = test_features, type = "prob")
 # Evaluate performance
 conf_matrix <- confusionMatrix(test_predictions, test_features$Storage.Week)
 print(conf_matrix)
-```
+``` 
 
 ```{r}
-conf_matrix$table # raw counts
-
-cm_counts <- conf_matrix$table
-
-cm_df <- as.data.frame(conf_matrix$table)
-colnames(cm_df) <- c("Reference", "Predicted", "Count")
-
-ggplot(cm_df, aes(x = Reference, y = Predicted, fill = Count)) +
-  geom_tile() +
-  geom_text(aes(label = Count), size = 3) +
-  scale_fill_gradient(low = "white", high = "steelblue") +
-  theme_minimal() +
-  labs(title = "Confusion Matrix RF Storage Weeks (Counts)", x = "Predicted", y = "Reference")
+# plot confusion matrix
+plot_confusion_matrix(conf_matrix, title = "Confusion Matrix RF Storage Weeks (Counts) Trained on DCA Year 2, Tested on DCA Year 1")
 ```
+
+
 
 #################################################################
 ################ Model Training (Ripening Stage) ################
 #################################################################
+
+# Train: Year 1
+# Test: Year 2
+
+```{r}
+# swap training and test data to use Year 1 for training and Year 2 for test
+list_datasets <- switch_training_test_data(training_data, test_data)
+training_data <- list_datasets$training_data
+test_data <- list_datasets$test_data
+```
 
 ```{r}
 # remove storage week, use only ripening stage for classification
@@ -280,14 +391,23 @@ rf_model_ripening <- train(
 )
 ```
 
-#################################################
+###############################################################
 ########## Test Ripening Stage Model with DCA Year 2 ##########
-#################################################
+###############################################################
+
 
 ```{r}
 # Prepare test data
 test_features_ripening <- test_data %>%
   dplyr::select(-Storage.Week)
+```
+
+```{r}
+# Align factor levels between predictions and test data
+test_features_ripening$Ripening.Stage <- factor(
+  test_features_ripening$Ripening.Stage,
+  levels = levels(training_features_ripening$Ripening.Stage) # match levels to training data
+)
 ```
 
 ```{r}
@@ -303,17 +423,86 @@ print(conf_matrix_ripening)
 ```
 
 ```{r}
-conf_matrix_ripening$table # raw counts
+plot_confusion_matrix(conf_matrix_ripening, title = "Confusion Matrix RF Ripening Stage (Counts) Trained on DCA Year 1, Tested on DCA Year 2")
+```
 
-cm_counts <- conf_matrix_ripening$table
+###############################################################
+################ Model Training (Ripening Stage) ################
+###############################################################
+# Train: Year 2
+# Test: Year 1
 
-cm_df <- as.data.frame(conf_matrix_ripening$table)
-colnames(cm_df) <- c("Reference", "Predicted", "Count")
+```{r}
+# swap training and test data to use Year 2 for training and Year 1 for test
+list_datasets <- switch_training_test_data(training_data, test_data)
+training_data <- list_datasets$training_data
+test_data <- list_datasets$test_data
+```
 
-ggplot(cm_df, aes(x = Reference, y = Predicted, fill = Count)) +
-  geom_tile() +
-  geom_text(aes(label = Count), size = 3) +
-  scale_fill_gradient(low = "white", high = "steelblue") +
-  theme_minimal() +
-  labs(title = "Confusion Matrix RF Ripening Stage (Counts)", x = "Predicted", y = "Reference")
+```{r}
+# remove storage week, use only ripening stage for classification
+training_features_ripening <- training_data %>%
+  dplyr::select(-Storage.Week)
+```
+
+```{r}
+# train control for ripening stage
+train_control <- trainControl(
+  method = "cv",
+  number = 5,
+  classProbs = TRUE,
+  summaryFunction = multiClassSummary,
+  savePredictions = "final",
+  index = createFolds(training_features_ripening$Ripening.Stage, k = 5, list = TRUE, returnTrain = TRUE)
+)
+
+set.seed(123) # for reproducibility
+# Define parameter grid
+tune_grid <- expand.grid(mtry = c(5, 10, 15, 20, 25))
+# Train with grid search
+rf_model_ripening <- train(
+  Ripening.Stage ~ .,
+  data = training_features_ripening,
+  method = "rf",
+  trControl = train_control,
+  tuneGrid = tune_grid,
+  metric = "Accuracy",
+  ntree = 1000,
+  importance = TRUE,
+  preProcess = c("center", "scale")
+)
+```
+
+################################################
+########## Test Model with DCA Year 1 ##########
+################################################
+
+```{r}
+# Prepare test data
+test_features_ripening <- test_data %>%
+  dplyr::select(-Storage.Week)
+```
+
+```{r}
+# Align factor levels between predictions and test data
+test_features_ripening$Ripening.Stage <- factor(
+  test_features_ripening$Ripening.Stage,
+  levels = levels(training_features_ripening$Ripening.Stage) # match levels to training data
+)
+```
+```{r}
+# predict on test data
+test_predictions_ripening <- predict(rf_model_ripening, newdata = test_features_ripening)
+test_probabilities_ripening <- predict(rf_model_ripening, newdata = test_features_ripening, type = "prob")
+```
+
+```{r}
+# evaluate performance
+conf_matrix_ripening <- confusionMatrix(test_predictions_ripening, test_features_ripening$Ripening.Stage)
+print(conf_matrix_ripening)
+```
+
+```{r}
+plot_confusion_matrix(conf_matrix_ripening, title = "Confusion Matrix RF Ripening
+Stage (Counts) Trained on DCA Year 2, Tested on DCA Year 1")
 ```
