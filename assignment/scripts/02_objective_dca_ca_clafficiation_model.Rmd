@@ -13,6 +13,7 @@ library(ggplot2)
 library(caret)
 library(dotenv)
 library(dplyr)
+library(Rcatch22)
 ```
 
 ################################################
@@ -65,7 +66,208 @@ print(paste("Utility functions sourced from:", UTILS_FILEPATH))
 ################################################
 
 ```{r}
-# load DCA Year one and two separately
-dca_y1 <- load_data(file.path(DATA_DIR, "DCA_Year1.csv"))
+# load DCA two
 dca_y2 <- load_data(file.path(DATA_DIR, "DCA_Year2.csv"))
+```
+
+```{r}
+# infer mean values for missing data in dca_y2
+dca_y2 <- infer_mean_for_nan(dca_y2)
+```
+
+```{r}
+# set Sample.ID as row names and remove from columns
+rownames(dca_y2) <- dca_y2$Sample.ID
+dca_y2$Sample.ID <- NULL
+dca_y2$storage_condition <- "DCA"
+```
+
+```{r}
+# load CA two
+ca_y2 <- load_data(file.path(DATA_DIR, "CA_Year2.csv"))
+rownames(ca_y2) <- ca_y2$Sample.ID
+ca_y2$Sample.ID <- NULL
+ca_y2$storage_condition <- "CA"
+```
+
+```{r}
+# merge DCA and CA data for Year 2
+combined_y2 <- rbind(dca_y2, ca_y2)
+```
+
+```{r}
+table(combined_y2$storage_condition, combined_y2$Storage.Week)
+```
+
+```{r}
+weeks <- c(0, 5, 11, 17, 23, 29)
+combined_y2$Storage.Week <- factor(
+  combined_y2$Storage.Week,
+  levels = weeks, # numeric vector, not a single string
+)
+
+# order by Storage.Week
+combined_y2 <- combined_y2[order(combined_y2$Storage.Week), ]
+```
+
+```{r}
+# exclude Storage.Week, Ripening.Stage, and storage_condition from features
+features <- combined_y2 %>%
+  dplyr::select(-Storage.Week, -Ripening.Stage, -storage_condition)
+```
+
+```{r}
+# set.seed(1)
+
+# weeks <- c(0, 5, 11, 17, 23, 29)
+# vars <- names(features)
+# n0 <- 12
+
+# mat <- do.call(rbind, lapply(weeks, function(w) {
+#   df_w <- combined_y2 %>%
+#     filter(storage_condition == "CA", Storage.Week == w) %>%
+#     dplyr::select(all_of(vars))
+
+#   idx <- sample.int(nrow(df_w), size = n0, replace = TRUE)
+#   colMeans(df_w[idx, , drop = FALSE], na.rm = TRUE)
+# }))
+
+# rownames(mat) <- weeks
+# colnames(mat) <- vars
+```
+
+```{r}
+# sanity checks
+# dim(mat) # should be 6 36
+# mat[1:2, 1:6] # preview
+# is.numeric(mat) # TRUE
+```
+
+```{r}
+# try to run catch22 on one feature to test
+# f_firm <- catch22_all(mat[, "Firmness"])
+```
+
+Slightly vibe coding now...
+
+```{r}
+library(dplyr)
+library(Rcatch22)
+
+set.seed(1)
+
+weeks <- c(0, 5, 11, 17, 23, 29)
+vars <- names(features)
+n0 <- 12
+B <- 500
+
+# 1) one replicate -> 6x36 matrix
+make_mat <- function(dat, treatment, weeks, vars, n0) {
+  mat <- do.call(rbind, lapply(weeks, function(w) {
+    df_w <- dat %>%
+      filter(storage_condition == treatment, Storage.Week == w) %>%
+      dplyr::select(all_of(vars))
+
+    idx <- sample.int(nrow(df_w), size = n0, replace = TRUE)
+    colMeans(df_w[idx, , drop = FALSE], na.rm = TRUE)
+  }))
+  rownames(mat) <- weeks
+  colnames(mat) <- vars
+  mat
+}
+
+# 2) 6x36 matrix -> named numeric vector length 792
+mat_to_catch22 <- function(mat) {
+  val_slot_global <- NULL
+
+  feat_vec <- unlist(lapply(colnames(mat), function(v) {
+    f <- catch22_all(mat[, v])
+
+    if (is.null(val_slot_global)) {
+      val_slot_global <<- setdiff(names(f), "names")
+      stopifnot(length(val_slot_global) == 1)
+    }
+
+    vals <- f[[val_slot_global]]
+    names(vals) <- paste0(v, "__", f$names)
+    vals
+  }), use.names = TRUE)
+
+  feat_vec
+}
+
+# 3) Generate feature rows directly (no storing mats)
+make_feature_row <- function(dat, treatment, weeks, vars, n0) {
+  mat <- make_mat(dat, treatment, weeks, vars, n0)
+  mat_to_catch22(mat)
+}
+
+# CA features (500 x 792)
+X_CA <- do.call(rbind, replicate(B, make_feature_row(combined_y2, "CA", weeks, vars, n0), simplify = FALSE))
+# DCA features (500 x 792)
+X_DCA <- do.call(rbind, replicate(B, make_feature_row(combined_y2, "DCA", weeks, vars, n0), simplify = FALSE))
+
+X <- rbind(X_CA, X_DCA)
+X <- as.data.frame(X)
+
+# Add label
+X$storage_condition <- factor(c(rep("CA", B), rep("DCA", B)), levels = c("CA", "DCA"))
+
+# sanity checks
+dim(X) # should be 1000 x (792 + 1)
+sum(is.na(X)) # ideally 0
+sum(!is.finite(as.matrix(X[, -ncol(X)]))) # ideally 0
+head(X[, c(1, 2, 3, ncol(X))])
+```
+
+```{r}
+library(caret)
+library(dplyr)
+library(gmodels)
+
+set.seed(42)
+
+# 1) Split into train/test (70/30)
+train_idx <- createDataPartition(X$storage_condition, p = 0.7, list = FALSE)
+
+trainSet <- X[train_idx, ]
+testSet <- X[-train_idx, ]
+
+trainCl <- trainSet$storage_condition
+testCl <- testSet$storage_condition
+
+# Separate predictors
+trainX <- trainSet %>% dplyr::select(-storage_condition)
+testX <- testSet %>% dplyr::select(-storage_condition)
+
+# 2) Center/scale based on TRAIN only, then apply to test
+pp <- preProcess(trainX, method = c("center", "scale"))
+trainX_sc <- predict(pp, trainX)
+testX_sc <- predict(pp, testX)
+
+# Recombine (caret likes formula interface; easiest is bind the outcome back)
+train_sc <- data.frame(trainX_sc, storage_condition = trainCl)
+test_sc <- data.frame(testX_sc, storage_condition = testCl)
+
+# 3) Train Random Forest (caret)
+# Option A: ranger RF (fast) via caret
+ctrl <- trainControl(method = "cv", number = 5) # internal CV on training set
+
+rf_fit <- train(
+  storage_condition ~ .,
+  data = train_sc,
+  method = "ranger",
+  trControl = ctrl,
+  importance = "impurity"
+)
+
+rf_fit
+
+# 4) Predict + evaluate on held-out test
+pred <- predict(rf_fit, newdata = test_sc)
+```
+
+```{r}
+CrossTable(testCl, pred, prop.chisq = FALSE, prop.t = FALSE, prop.c = FALSE, prop.r = FALSE)
+confusionMatrix(pred, testCl, positive = "DCA")
 ```

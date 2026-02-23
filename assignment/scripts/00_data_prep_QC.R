@@ -86,6 +86,36 @@ main <- function(script_dir) {
   dca_year_1 <- dca_year_1 %>% drop_na()
   cat("Missing values in DCA Year 1:", sum(is.na(dca_year_1)), "\n\n")
 
+  ### check for duplicates
+  cat("Checking for duplicate rows in the datasets...\n")
+  cat("Duplicate rows in CA Year 2:", sum(duplicated(ca_year_2)), "\n")
+  cat("Duplicate rows in DCA Year 2:", sum(duplicated(dca_year_2)), "\n")
+  cat("Duplicate rows in DCA Year 1:", sum(duplicated(dca_year_1)), "\n\n")
+
+  ### combine datasets for exploration
+  colnames(dca_year_1)[colnames(dca_year_1) == "X7OH.ABA"] <- "X7.OH.ABA"
+
+
+  combined_data <- rbind(ca_year_2, dca_year_2, dca_year_1)
+
+  rownames(combined_data) <- combined_data$Sample.ID
+  combined_data <- combined_data[, -1]
+
+  print("Combined dataset dimensions:")
+  print(dim(combined_data))
+  cat("Checking for duplicate rows in the combined dataset...\n")
+  cat("Duplicate rows in combined dataset:", sum(duplicated(combined_data)), "\n\n")
+
+  # print duplicate rows if any
+  if (sum(duplicated(combined_data)) > 0) {
+    cat("Duplicate rows in combined dataset:\n")
+    print(rownames(combined_data)[duplicated(combined_data)])
+  }
+
+  # remove week 0 from CA Year 2 and DCA Year 2
+  ca_year_2 <- ca_year_2 %>% filter(Storage.Week != "0")
+  dca_year_2 <- dca_year_2 %>% filter(Storage.Week != "0")
+
   # extract features and labels
   ca_year_2_samples <- extract_sample_names(ca_year_2)
   rownames(ca_year_2) <- ca_year_2_samples
@@ -194,11 +224,17 @@ main <- function(script_dir) {
   )
 
   # biplots for DCA Year 1
+
+  p <- biplot_wrapper(dca_year_1_pca, dca_year_1$Storage.Week, dca_year_1_samples)
+
+  p <- p + scale_color_manual(values = c("#8ce606", "#290ec1", "#e8ac08", "#bcd1cb", "#049f7d"))
+
   save_plot(
-    biplot_wrapper(dca_year_1_pca, dca_year_1$Storage.Week, dca_year_1_samples),
+    p,
     "biplot_dca_year_1_storage_week.png",
     PLOTS_DIR
   )
+
 
   save_plot(
     biplot_wrapper(dca_year_1_pca, dca_year_1$Ripening.Stage, dca_year_1_samples),
