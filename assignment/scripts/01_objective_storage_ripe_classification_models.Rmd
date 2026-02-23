@@ -84,7 +84,11 @@ training_data <- training_data %>% drop_na()
 test_data <- infer_mean_for_nan(test_data)
 ```
 
-
+```{r}
+# remove week 0 samples from dca_y2 (test data)
+test_data <- test_data %>%
+  filter(Storage.Week != 0)
+```
 
 ```{r}
 # Fix column name mismatch
