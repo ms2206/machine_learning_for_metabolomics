@@ -14,6 +14,7 @@ library(caret)
 library(dotenv)
 library(dplyr)
 library(Rcatch22)
+library(gmodels)
 ```
 
 ################################################
@@ -96,11 +97,16 @@ combined_y2 <- rbind(dca_y2, ca_y2)
 ```
 
 ```{r}
+# remove week 0 from combined as these are duplicates
+combined_y2 <- combined_y2[combined_y2$Storage.Week != 0, ]
+```
+
+```{r}
 table(combined_y2$storage_condition, combined_y2$Storage.Week)
 ```
 
 ```{r}
-weeks <- c(0, 5, 11, 17, 23, 29)
+weeks <- c(5, 11, 17, 23, 29)
 combined_y2$Storage.Week <- factor(
   combined_y2$Storage.Week,
   levels = weeks, # numeric vector, not a single string
@@ -117,46 +123,8 @@ features <- combined_y2 %>%
 ```
 
 ```{r}
-# set.seed(1)
-
-# weeks <- c(0, 5, 11, 17, 23, 29)
-# vars <- names(features)
-# n0 <- 12
-
-# mat <- do.call(rbind, lapply(weeks, function(w) {
-#   df_w <- combined_y2 %>%
-#     filter(storage_condition == "CA", Storage.Week == w) %>%
-#     dplyr::select(all_of(vars))
-
-#   idx <- sample.int(nrow(df_w), size = n0, replace = TRUE)
-#   colMeans(df_w[idx, , drop = FALSE], na.rm = TRUE)
-# }))
-
-# rownames(mat) <- weeks
-# colnames(mat) <- vars
-```
-
-```{r}
-# sanity checks
-# dim(mat) # should be 6 36
-# mat[1:2, 1:6] # preview
-# is.numeric(mat) # TRUE
-```
-
-```{r}
-# try to run catch22 on one feature to test
-# f_firm <- catch22_all(mat[, "Firmness"])
-```
-
-Slightly vibe coding now...
-
-```{r}
-library(dplyr)
-library(Rcatch22)
-
 set.seed(1)
 
-weeks <- c(0, 5, 11, 17, 23, 29)
 vars <- names(features)
 n0 <- 12
 B <- 500
@@ -221,37 +189,32 @@ head(X[, c(1, 2, 3, ncol(X))])
 ```
 
 ```{r}
-library(caret)
-library(dplyr)
-library(gmodels)
+# Remove constant (and optionally near-zero variance) predictors using TRAIN only,
+# then center/scale, then fit RF with caret.
 
 set.seed(42)
 
-# 1) Split into train/test (70/30)
+# 1) Split
 train_idx <- createDataPartition(X$storage_condition, p = 0.7, list = FALSE)
-
 trainSet <- X[train_idx, ]
 testSet <- X[-train_idx, ]
 
 trainCl <- trainSet$storage_condition
 testCl <- testSet$storage_condition
 
-# Separate predictors
 trainX <- trainSet %>% dplyr::select(-storage_condition)
 testX <- testSet %>% dplyr::select(-storage_condition)
 
-# 2) Center/scale based on TRAIN only, then apply to test
+# 2) Center/scale using TRAIN only
 pp <- preProcess(trainX, method = c("center", "scale"))
 trainX_sc <- predict(pp, trainX)
 testX_sc <- predict(pp, testX)
 
-# Recombine (caret likes formula interface; easiest is bind the outcome back)
 train_sc <- data.frame(trainX_sc, storage_condition = trainCl)
 test_sc <- data.frame(testX_sc, storage_condition = testCl)
 
-# 3) Train Random Forest (caret)
-# Option A: ranger RF (fast) via caret
-ctrl <- trainControl(method = "cv", number = 5) # internal CV on training set
+# 3) Fit RF (ranger) + predict
+ctrl <- trainControl(method = "cv", number = 5)
 
 rf_fit <- train(
   storage_condition ~ .,
@@ -261,13 +224,12 @@ rf_fit <- train(
   importance = "impurity"
 )
 
-rf_fit
-
-# 4) Predict + evaluate on held-out test
 pred <- predict(rf_fit, newdata = test_sc)
-```
 
-```{r}
+# 4) Evaluate
 CrossTable(testCl, pred, prop.chisq = FALSE, prop.t = FALSE, prop.c = FALSE, prop.r = FALSE)
 confusionMatrix(pred, testCl, positive = "DCA")
+
+# sanity: how many predictors kept?
+c(n_before = ncol(trainX), n_after = ncol(trainX))
 ```
