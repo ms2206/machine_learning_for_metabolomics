@@ -122,6 +122,10 @@ features <- combined_y2 %>%
   dplyr::select(-Storage.Week, -Ripening.Stage, -storage_condition)
 ```
 
+####################################################################################
+Acknowledgement of AI Assistance: This section was developed with substantial assistance from a Large Language Model (LLM). While I have reviewed and verified the code outputs and understand the conceptual workflow, I acknowledge that the code implementation was predominantly LLM-generated. Independent understanding of the technical details remains limited. Please mark accordingly.
+
+
 ```{r}
 set.seed(1)
 
@@ -189,9 +193,6 @@ head(X[, c(1, 2, 3, ncol(X))])
 ```
 
 ```{r}
-# Remove constant (and optionally near-zero variance) predictors using TRAIN only,
-# then center/scale, then fit RF with caret.
-
 set.seed(42)
 
 # 1) Split
@@ -229,7 +230,85 @@ pred <- predict(rf_fit, newdata = test_sc)
 # 4) Evaluate
 CrossTable(testCl, pred, prop.chisq = FALSE, prop.t = FALSE, prop.c = FALSE, prop.r = FALSE)
 confusionMatrix(pred, testCl, positive = "DCA")
-
-# sanity: how many predictors kept?
-c(n_before = ncol(trainX), n_after = ncol(trainX))
 ```
+
+
+```{r}
+# load DCA one
+dca_y1 <- load_data(file.path(DATA_DIR, "DCA_Year1.csv"))
+rownames(dca_y1) <- dca_y1$Sample.ID
+dca_y1$Sample.ID <- NULL
+dca_y1$storage_condition <- "DCA"
+
+# Rename columns to match training data
+if ("X7OH.ABA" %in% colnames(dca_y1)) {
+  colnames(dca_y1)[colnames(dca_y1) == "X7OH.ABA"] <- "X7.OH.ABA"
+}
+```
+
+```{r}
+# use this model to predict on Year 1 data
+# generate features for Year 1 data (500 replicates)
+X_y1 <- do.call(rbind, replicate(B, make_feature_row(dca_y1, "DCA", weeks, vars, n0), simplify = FALSE))
+X_y1 <- as.data.frame(X_y1)
+colnames(X_y1) <- colnames(X)[-ncol(X)] # match training data column names
+X_y1$storage_condition <- factor(rep("DCA", nrow(X_y1)), levels = c("CA", "DCA"))
+
+# Diagnostic: check data structure
+cat("X_y1 dimensions:", dim(X_y1), "\n")
+cat("X_y1 column names match training?", all(colnames(X_y1)[-ncol(X_y1)] == colnames(train_sc)[-ncol(train_sc)]), "\n")
+```
+
+```{r}
+# predict on Year 1 data
+X_y1_features <- X_y1 %>% dplyr::select(-storage_condition)
+
+# Diagnostic: check raw features before preprocessing
+cat("X_y1_features dimensions:", dim(X_y1_features), "\n")
+cat("Any NAs in X_y1_features?", sum(is.na(X_y1_features)), "\n")
+cat("Any non-finite values in X_y1_features?", sum(!is.finite(as.matrix(X_y1_features))), "\n")
+
+# Try preprocessing
+cat("Applying preprocessing...\n")
+X_y1_sc <- predict(pp, X_y1_features)
+cat("Preprocessing successful\n")
+
+# Replace NAs with 0 (results from scaling zero-variance columns)
+X_y1_sc[is.na(X_y1_sc)] <- 0
+
+# Add factor response variable with proper levels
+X_y1_sc <- data.frame(X_y1_sc, storage_condition = factor(rep("DCA", nrow(X_y1_sc)), levels = c("CA", "DCA")))
+
+# Diagnostic: check preprocessed data
+cat("X_y1_sc dimensions:", dim(X_y1_sc), "\n")
+cat("Any NAs in X_y1_sc?", sum(is.na(X_y1_sc)), "\n")
+cat("Any non-finite values in X_y1_sc?", sum(!is.finite(as.matrix(X_y1_sc[, -ncol(X_y1_sc)]))), "\n")
+cat("X_y1_sc column names match train_sc?", all(colnames(X_y1_sc) == colnames(train_sc)), "\n")
+
+# Check factor levels
+cat("storage_condition levels in X_y1_sc:", levels(X_y1_sc$storage_condition), "\n")
+cat("storage_condition class:", class(X_y1_sc$storage_condition), "\n")
+
+pred_y1 <- predict(rf_fit, newdata = X_y1_sc)
+
+# Ensure pred_y1 is a factor with the same levels as the response
+pred_y1 <- factor(pred_y1, levels = c("CA", "DCA"))
+
+# Check predictions
+cat("Unique predictions in pred_y1:", paste(unique(pred_y1), collapse = ", "), "\n")
+cat("Prediction counts:\n")
+print(table(pred_y1))
+
+# Check how many values were replaced with 0
+cat("Number of values replaced with 0:", sum(X_y1_sc[, -ncol(X_y1_sc)] == 0), "\n")
+cat("Total values in features:", nrow(X_y1_sc) * (ncol(X_y1_sc) - 1), "\n")
+
+# evaluate on Year 1 data
+cat("\nConfusion Matrix:\n")
+print(table(Actual = X_y1$storage_condition, Predicted = pred_y1))
+
+confusionMatrix(pred_y1, X_y1$storage_condition, positive = "DCA")
+```
+
+END OF Acknowledgement of AI Assistance.
+####################################################################################
